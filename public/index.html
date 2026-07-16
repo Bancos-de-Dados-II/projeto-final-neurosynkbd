@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurosync - Cadastro de Localização</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Neurosync</h1>
+        <p>Encontre ou cadastre espaços e pontos de apoio amigáveis à neurodivergência.</p>
+    </header>
+
+    <main class="container">
+        <section class="card form-section">
+            <h2>Atualizar Minha Localização</h2>
+            <p class="instruction">Selecione seu usuário, clique em um ponto no mapa à direita para capturar as coordenadas automaticamente e clique em salvar.</p>
+            
+            <form id="cadastro-form">
+                <div class="form-group">
+                    <label for="usuarioId">ID do Usuário (MongoDB):</label>
+                    <input type="text" id="usuarioId" required placeholder="Cole o ID do usuário gerado no Mongo">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="latitude">Latitude:</label>
+                        <input type="text" id="latitude" readonly required placeholder="Clique no mapa">
+                    </div>
+                    <div class="form-group">
+                        <label for="longitude">Longitude:</label>
+                        <input type="text" id="longitude" readonly required placeholder="Clique no mapa">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Salvar Localização GeoJSON</button>
+            </form>
+            <div id="mensagem-status"></div>
+        </section>
+
+        <section class="card map-section">
+            <div id="map"></div>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
