@@ -134,7 +134,7 @@ header h1 {
     background-color: #2d3748;
 }
 
-/* --- REGRAS PARA O MODO ESCURO (BAIXO ESTÍMULO) --- */
+
 body.dark-mode {
     background-color: #121212; /* Fundo cinza escuro, muito mais suave que preto puro */
     color: #e0e0e0;
@@ -168,4 +168,195 @@ body.dark-mode .instruction {
 /* Ajuste suave no mapa para não agredir os olhos no escuro */
 body.dark-mode #map {
     filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+/* Estilo da Legenda do Mapa */
+.map-legend {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #edf2f7;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.map-legend h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #4a5568;
+}
+
+.map-legend ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 20px;
+}
+
+.map-legend li {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.legend-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.icon-user {
+    background-color: #3182ce; /* Azul do Leaflet */
+}
+
+.icon-support {
+    background-color: #48bb78; /* Verde de Apoio */
+}
+
+/* Adaptação da legenda para o Modo Escuro */
+body.dark-mode .map-legend {
+    background-color: #2d3748;
+    border-color: #4a5568;
+}
+
+body.dark-mode .map-legend h4 {
+    color: #e2e8f0;
+}
+/* Botão de GPS / Localização Atual */
+.btn-gps {
+    width: 100%;
+    background-color: #4a5568;
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin-bottom: 15px;
+}
+
+.btn-gps:hover {
+    background-color: #2d3748;
+}
+
+.btn-gps:active {
+    transform: scale(0.98);
+}
+
+/* Ajuste do botão de GPS no Modo Escuro */
+body.dark-mode .btn-gps {
+    background-color: #48bb78; 
+    color: #1a202c;
+}
+
+body.dark-mode .btn-gps:hover {
+    background-color: #38a169;
+}
+
+
+
+#cadastro-form {
+    display: block; /* Volta ao fluxo normal, empilhando as seções */
+}
+
+/* Espaçamento consistente para cada seção do formulário */
+.form-section {
+    margin-bottom: 20px;
+}
+
+/* Centraliza o botão GPS no topo */
+.form-gps-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px; /* Mais espaço antes do ID */
+}
+
+/* Botão GPS: Visual Leve, Amigável e Acessível */
+.btn-gps {
+    width: auto; 
+    min-width: 250px; 
+    background-color: #f7fafc; 
+    color: #4a5568; 
+    border: 2px solid #cbd5e0; /* Borda mais visível para acessibilidade */
+    padding: 10px 20px;
+    border-radius: 20px; /* Bordas arredondadas são mais acolhedoras */
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-gps:hover {
+    background-color: #edf2f7;
+    border-color: #a0aec0;
+    transform: translateY(-1px);
+}
+
+.btn-gps:active {
+    transform: translateY(1px);
+}
+
+/* Garante que a linha de coordenadas use Flexbox corretamente */
+.form-row {
+    display: flex;
+    gap: 15px; /* Espaço entre Lat e Lng */
+}
+
+.half-width {
+    flex: 1; /* Cada campo ocupa metade da linha */
+}
+
+/* Centraliza o botão de Salvar no final */
+.form-submit-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+/* Botão Salvar: Mantém a cor principal, mas centralizado */
+.btn-submit {
+    width: auto;
+    min-width: 250px;
+    background-color: #319795;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+    background-color: #2c7a7b;
+}
+
+/* Ajustes suaves do GPS e Salvar no Modo Escuro (Baixo Estímulo) */
+body.dark-mode .btn-gps {
+    background-color: #2d3748; 
+    color: #e2e8f0; 
+    border-color: #4a5568;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+body.dark-mode .btn-gps:hover {
+    background-color: #4a5568;
+}
+
+body.dark-mode .btn-submit {
+    background-color: #38a169; /* Verde mais suave no escuro */
 }

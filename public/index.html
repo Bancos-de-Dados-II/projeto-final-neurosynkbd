@@ -25,29 +25,43 @@
             <p class="instruction">Selecione seu usuário, clique em um ponto no mapa à direita para capturar as coordenadas automaticamente e clique em salvar.</p>
             
             <form id="cadastro-form">
-                <div class="form-group">
-                    <label for="usuarioId">ID do Usuário (MongoDB):</label>
-                    <input type="text" id="usuarioId" required placeholder="Cole o ID do usuário gerado no Mongo">
-                </div>
+    
+    <div class="form-section form-gps-section">
+        <button type="button" id="btn-gps" class="btn-gps">📍 Usar Minha Localização Atual</button>
+    </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="latitude">Latitude:</label>
-                        <input type="text" id="latitude" readonly required placeholder="Clique no mapa">
-                    </div>
-                    <div class="form-group">
-                        <label for="longitude">Longitude:</label>
-                        <input type="text" id="longitude" readonly required placeholder="Clique no mapa">
-                    </div>
-                </div>
+    <div class="form-section form-group">
+        <label for="usuarioId">ID do Usuário (MongoDB):</label>
+        <input type="text" id="usuarioId" name="usuarioId" placeholder="Cole o ID do usuário..." required>
+    </div>
 
-                <button type="submit" class="btn-primary">Salvar Localização GeoJSON</button>
-            </form>
+    <div class="form-section form-row">
+        <div class="form-group half-width">
+            <label for="latitude">Latitude:</label>
+            <input type="text" id="latitude" name="latitude" placeholder="Clique no mapa..." readonly required>
+        </div>
+        <div class="form-group half-width">
+            <label for="longitude">Longitude:</label>
+            <input type="text" id="longitude" name="longitude" placeholder="Clique no mapa..." readonly required>
+        </div>
+    </div>
+
+    <div class="form-section form-submit-section">
+        <button type="submit" class="btn-submit">Salvar Localização GeoJSON</button>
+    </div>
+</form>
             <div id="mensagem-status"></div>
         </section>
 
         <section class="card map-section">
             <div id="map"></div>
+            <div class="map-legend">
+    <h4>Legenda do Mapa:</h4>
+    <ul>
+        <li><span class="legend-icon icon-user"></span> Seu Marcador (Azul)</li>
+        <li><span class="legend-icon icon-support"></span> Pontos de Apoio Amigáveis (Verde)</li>
+    </ul>
+</div>
         </section>
     </main>
 
