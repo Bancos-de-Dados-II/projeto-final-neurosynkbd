@@ -64,3 +64,17 @@ document.getElementById('cadastro-form').addEventListener('submit', async functi
         mensagemStatus.style.display = 'block';
     }
 });
+// 5. Lógica para Alternar o Modo de Baixo Estímulo (Dark Mode)
+const botaoTema = document.getElementById('toggle-theme');
+
+botaoTema.addEventListener('click', () => {
+    // Adiciona ou remove a classe 'dark-mode' do corpo da página
+    document.body.classList.toggle('dark-mode');
+    
+    // Altera o texto do botão para o usuário saber o que está ativo
+    if (document.body.classList.contains('dark-mode')) {
+        botaoTema.innerText = '☀️ Modo Normal';
+    } else {
+        botaoTema.innerText = '👁️ Modo Baixo Estímulo';
+    }
+});
