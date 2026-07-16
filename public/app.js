@@ -35,8 +35,8 @@ document.getElementById('cadastro-form').addEventListener('submit', async functi
 
     try {
         
-        
         const resposta = await fetch('/router/localizacao/atualizar', { 
+            method: 'PUT', 
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -47,7 +47,8 @@ document.getElementById('cadastro-form').addEventListener('submit', async functi
             })
         });
 
-        const dados = await reply.json();
+        
+        const dados = await resposta.json(); 
 
         if (resposta.ok) {
             mensagemStatus.className = 'sucesso';
