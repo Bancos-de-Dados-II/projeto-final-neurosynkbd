@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
-import sequelize from '../database/sequelize.js';
-import Paciente from './paciente.js';
+import sequelize from '../database/sequelize'; 
+import Paciente from './paciente'; 
 
 interface BotaoSosAttributes {
     id: string;
@@ -51,13 +51,18 @@ BotaoSos.init({
     pushEnviado: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    pacienteId: {
+        type: DataTypes.UUID,
+        allowNull: true
     }
 }, {
-    sequelize,
+    sequelize, 
     modelName: 'BotaoSos',
     tableName: 'Botoes_Sos'
 });
 
+// Relacionamentos
 Paciente.hasMany(BotaoSos, { foreignKey: 'pacienteId', as: 'alertasSos' });
 BotaoSos.belongsTo(Paciente, { foreignKey: 'pacienteId', as: 'paciente' });
 

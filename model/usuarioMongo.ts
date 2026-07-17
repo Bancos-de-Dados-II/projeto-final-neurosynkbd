@@ -1,19 +1,19 @@
 import { Schema, model, Document } from 'mongoose';
 
-
 export interface IUsuario extends Document {
     nome: string;
     email: string;
+    senha: string;
     tipo_usuario: 'Paciente' | 'Cuidador' | 'Terapeuta';
     localizacao: {
         type: 'Point';
-        coordinates: [number, number];
+        coordinates: [number, number]; 
     };
 }
-
 const UsuarioSchema = new Schema<IUsuario>({
     nome: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    senha: { type: String, required: true }, 
     tipo_usuario: { type: String, enum: ['Paciente', 'Cuidador', 'Terapeuta'], required: true },
     localizacao: {
         type: {
@@ -22,7 +22,7 @@ const UsuarioSchema = new Schema<IUsuario>({
             required: true
         },
         coordinates: {
-            type: [Number], // [longitude, latitude]
+            type: [Number], 
             required: true
         }
     }
