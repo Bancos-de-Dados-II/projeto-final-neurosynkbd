@@ -3,69 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neurosync - Cadastro de Localização</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>NeuroSync - Cadastro e Localização</title>
+    <!-- Leaflet CSS para o Mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- CSS Customizado Integrado -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <header>
-        <header>
-    <h1>Neurosync</h1>
-    <p>Encontre ou cadastre espaços e pontos de apoio amigáveis à neurodivergência.</p>
-    <button id="toggle-theme" class="btn-theme">👁️ Modo Baixo Estímulo</button>
-</header>
-        <h1>Neurosync</h1>
-        <p>Encontre ou cadastre espaços e pontos de apoio amigáveis à neurodivergência.</p>
+        <div class="header-container">
+            <h1>NeuroSync App</h1>
+            <p>Conectando e localizando com segurança</p>
+        </div>
     </header>
 
     <main class="container">
+        <!-- NOVA SEÇÃO: Fluxo Transacional Primário no MongoDB (Cadastro) -->
         <section class="card form-section">
-            <h2>Atualizar Minha Localização</h2>
-            <p class="instruction">Selecione seu usuário, clique em um ponto no mapa à direita para capturar as coordenadas automaticamente e clique em salvar.</p>
+            <h2>Criar Conta (NeuroSync)</h2>
+            <p class="instruction">Cadastre-se primeiro no banco primário para obter seu ID de acesso.</p>
             
-            <form id="cadastro-form">
-    
-    <div class="form-section form-gps-section">
-        <button type="button" id="btn-gps" class="btn-gps">📍 Usar Minha Localização Atual</button>
-    </div>
-
-    <div class="form-section form-group">
-        <label for="usuarioId">ID do Usuário (MongoDB):</label>
-        <input type="text" id="usuarioId" name="usuarioId" placeholder="Cole o ID do usuário..." required>
-    </div>
-
-    <div class="form-section form-row">
-        <div class="form-group half-width">
-            <label for="latitude">Latitude:</label>
-            <input type="text" id="latitude" name="latitude" placeholder="Clique no mapa..." readonly required>
-        </div>
-        <div class="form-group half-width">
-            <label for="longitude">Longitude:</label>
-            <input type="text" id="longitude" name="longitude" placeholder="Clique no mapa..." readonly required>
-        </div>
-    </div>
-
-    <div class="form-section form-submit-section">
-        <button type="submit" class="btn-submit">Salvar Localização GeoJSON</button>
-    </div>
-</form>
-            <div id="mensagem-status"></div>
+            <form id="registro-usuario-form">
+                <div class="form-group">
+                    <label for="reg-nome">Nome Completo:</label>
+                    <input type="text" id="reg-nome" placeholder="Digite seu nome..." required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">E-mail:</label>
+                    <input type="email" id="reg-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-senha">Senha:</label>
+                    <input type="password" id="reg-senha" placeholder="Crie uma senha..." required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-tipo">Tipo de Usuário:</label>
+                    <select id="reg-tipo" required>
+                        <option value="Paciente">Paciente</option>
+                        <option value="Cuidador">Cuidador</option>
+                        <option value="Terapeuta">Terapeuta</option>
+                    </select>
+                </div>
+                <div class="form-submit-section">
+                    <button type="submit" class="btn-submit">Cadastrar no MongoDB</button>
+                </div>
+            </form>
+            <div id="registro-status" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
         </section>
 
+        <!-- SEÇÃO: Atualizar Localização via Mapa -->
+        <section class="card form-section">
+            <h2>Atualizar Minha Localização</h2>
+            <p class="instruction">Selecione seu usuário, clique em um ponto no mapa abaixo para capturar as coordenadas automaticamente e clique em salvar.</p>
+            
+            <form id="cadastro-form">
+                <div class="form-gps-section">
+                    <button type="button" id="btn-gps" class="btn-gps">📍 Usar Minha Localização Atual</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="usuarioId">ID do Usuário (MongoDB):</label>
+                    <input type="text" id="usuarioId" name="usuarioId" placeholder="O ID aparecerá aqui após o cadastro..." required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="latitude">Latitude:</label>
+                        <input type="text" id="latitude" name="latitude" placeholder="Clique no mapa..." readonly required>
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="longitude">Longitude:</label>
+                        <input type="text" id="longitude" name="longitude" placeholder="Clique no mapa..." readonly required>
+                    </div>
+                </div>
+
+                <div class="form-submit-section">
+                    <button type="submit" class="btn-submit">Salvar Localização GeoJSON</button>
+                </div>
+            </form>
+            <div id="mensagem-status" style="margin-top: 25px; padding: 16px; border-radius: 20px; font-weight: 700; text-align: center; display: none;"></div>
+        </section>
+
+        <!-- SEÇÃO DO MAPA -->
         <section class="card map-section">
             <div id="map"></div>
             <div class="map-legend">
-    <h4>Legenda do Mapa:</h4>
-    <ul>
-        <li><span class="legend-icon icon-user"></span> Seu Marcador (Azul)</li>
-        <li><span class="legend-icon icon-support"></span> Pontos de Apoio Amigáveis (Verde)</li>
-    </ul>
-</div>
+                <h4>Legenda do Mapa:</h4>
+                <ul>
+                    <li><span class="legend-icon icon-user"></span> Seu Marcador (Azul)</li>
+                    <li><span class="legend-icon icon-support"></span> Pontos de Apoio Amigáveis (Verde)</li>
+                </ul>
+            </div>
         </section>
     </main>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet JS para o Mapa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Script de controle integrado -->
     <script src="app.js"></script>
 </body>
 </html>

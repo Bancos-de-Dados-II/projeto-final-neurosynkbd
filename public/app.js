@@ -1,34 +1,92 @@
-// 1. Inicializa o mapa focado no Brasil (coordenadas padrão de exemplo)
+// 1. Inicializa o mapa com foco no Brasil (Padrão)
 const map = L.map('map').setView([-15.7801, -47.9292], 4);
 
-// 2. Carrega a camada visual do OpenStreetMap
+// 2. Adiciona a camada de visualização OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Variável para guardar a referência do marcador que o usuário colocar
+// Marcador dinâmico do clique ou GPS
 let marcadorAtual = null;
 
-// 3. Detecta o clique no mapa para capturar as coordenadas
+// 3. Ouvinte de evento de clique no mapa para capturar coordenadas manuais
 map.on('click', function(e) {
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
+    const lat = e.latlng.lat.toFixed(6);
+    const lng = e.latlng.lng.toFixed(6);
 
-    // Se já existir um marcador, move ele. Se não, cria um novo.
+    document.getElementById('latitude').value = lat;
+    document.getElementById('longitude').value = lng;
+
     if (marcadorAtual) {
         marcadorAtual.setLatLng(e.latlng);
     } else {
-        marcadorAtual = L.marker(e.latlng).addTo(map);
+        marcadorAtual = L.marker(e.latlng).addTo(map).bindPopup("Local selecionado").openPopup();
     }
-
-    // Preenche os campos do formulário (com 6 casas decimais)
-    document.getElementById('latitude').value = lat.toFixed(6);
-    document.getElementById('longitude').value = lng.toFixed(6);
 });
 
-// 4. Envia os dados capturados para o seu Backend Express (CORRIGIDO)
+// 4. Funcionalidade de captura de Geolocalização nativa via GPS do navegador
+document.getElementById('btn-gps').addEventListener('click', function() {
+    const btn = this;
+    
+    if (!navigator.geolocation) {
+        alert("A geolocalização não é suportada pelo seu navegador.");
+        return;
+    }
+
+    btn.innerText = "⏳ Capturando localização...";
+    btn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+
+            const novasCoordenadas = [lat, lng];
+            map.setView(novasCoordenadas, 16);
+
+            if (marcadorAtual) {
+                marcadorAtual.setLatLng(novasCoordenadas);
+            } else {
+                marcadorAtual = L.marker(novasCoordenadas).addTo(map).bindPopup("Você está aqui!").openPopup();
+            }
+
+            btn.innerText = "📍 Usar Minha Localização Atual";
+            btn.disabled = false;
+        },
+        function(error) {
+            alert("Não foi possível obter sua localização. Selecione manualmente no mapa.");
+            btn.innerText = "📍 Usar Minha Localização Atual";
+            btn.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+});
+
+// 5. Pontos de Apoio Amigáveis Estáticos
+const pontosDeApoio = [
+    { nome: "Centro do Desenvolvimento Neurodivergente", lat: -15.7941, lng: -47.8825 },
+    { nome: "Clínica de Atendimento Especializado", lat: -23.5505, lng: -46.6333 }
+];
+
+pontosDeApoio.forEach(ponto => {
+    const iconeVerde = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+    L.marker([ponto.lat, ponto.lng], { icon: iconeVerde }).addTo(map).bindPopup(`<b>${ponto.nome}</b><br>Ponto Amigável`);
+});
+
+// 6. Envia os dados capturados para o seu Backend Express (INTEGRADO COM BACK-END - Arthur)
 document.getElementById('cadastro-form').addEventListener('submit', async function(e) {
-    e.preventDefault(); // Impede a página de recarregar
+    e.preventDefault(); 
 
     const usuarioId = document.getElementById('usuarioId').value;
     const latitude = document.getElementById('latitude').value;
@@ -36,13 +94,14 @@ document.getElementById('cadastro-form').addEventListener('submit', async functi
     const mensagemStatus = document.getElementById('mensagem-status');
 
     try {
-        const resposta = await fetch('/router/localizacao/atualizar', { 
-            method: 'PUT', // Garante que enviará os dados usando PUT
+        // CORREÇÃO DA ROTA: Agora aponta exatamente para o seu back-end Express
+        const resposta = await fetch('/usuarios/localizacao', { 
+            method: 'PUT', 
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                usuarioId: usuarioId,
+                usuarioId: usuarioId, // Enviado no corpo da requisição
                 latitude: latitude,
                 longitude: longitude
             })
@@ -52,7 +111,7 @@ document.getElementById('cadastro-form').addEventListener('submit', async functi
 
         if (resposta.ok) {
             mensagemStatus.className = 'sucesso';
-            mensagemStatus.innerText = 'Localização GeoJSON salva com sucesso!';
+            mensagemStatus.innerText = 'Localização GeoJSON salva com sucesso no MongoDB!';
             mensagemStatus.style.display = 'block';
         } else {
             throw new Error(dados.error || 'Erro desconhecido');
@@ -65,104 +124,56 @@ document.getElementById('cadastro-form').addEventListener('submit', async functi
     }
 });
 
-// 5. Lógica para Alternar o Modo de Baixo Estímulo (Dark Mode)
-const botaoTema = document.getElementById('toggle-theme');
+// 7. Integração do fluxo transacional de cadastro com o MongoDB Primário (Arthur)
+document.getElementById('registro-usuario-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-if (botaoTema) {
-    botaoTema.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        
-        if (document.body.classList.contains('dark-mode')) {
-            botaoTema.innerText = '☀️ Modo Normal';
-        } else {
-            botaoTema.innerText = '👁️ Modo Baixo Estímulo';
-        }
-    });
-}
+    const nome = document.getElementById('reg-nome').value;
+    const email = document.getElementById('reg-email').value;
+    const senha = document.getElementById('reg-senha').value;
+    const tipo_usuario = document.getElementById('reg-tipo').value;
+    
+    // Captura as coordenadas atuais do formulário ou define um padrão caso o mapa não tenha sido clicado ainda
+    const latitude = document.getElementById('latitude').value || "-15.7801";
+    const longitude = document.getElementById('longitude').value || "-47.9292";
+    
+    const registroStatus = document.getElementById('registro-status');
 
-// 6. Criando Marcadores de Exemplo (Pontos de Apoio) no Mapa
-const iconeVerde = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-const pontosDeApoio = [
-    {
-        nome: "Espaço Integrar - Clínica de Terapia Ocupacional",
-        descricao: "Especialistas em integração sensorial e ambiente acolhedor.",
-        lat: -15.7942,
-        lng: -47.8822
-    },
-    {
-        nome: "Parque da Cidade - Área Sensorial Silenciosa",
-        descricao: "Espaço aberto sem poluição sonora para descompressão.",
-        lat: -15.8030,
-        lng: -47.9050
-    },
-    {
-        nome: "Associação Neurodivergente",
-        descricao: "Grupo de apoio mútuo, palestras e acolhimento.",
-        lat: -15.7750,
-        lng: -47.9250
-    }
-];
-
-pontosDeApoio.forEach(ponto => {
-    L.marker([ponto.lat, ponto.lng], { icon: iconeVerde })
-        .addTo(map)
-        .bindPopup(`
-            <strong style="color: #2c7a7b;">${ponto.nome}</strong><br>
-            <span style="font-size: 0.85rem; color: #4a5568;">${ponto.descricao}</span>
-        `);
-});
-
-// 7. Lógica para Capturar a Localização Atual via GPS
-const botaoGPS = document.getElementById('btn-gps');
-
-if (botaoGPS) {
-    botaoGPS.addEventListener('click', () => {
-        if (!navigator.geolocation) {
-            alert('Desculpe, seu navegador não suporta geolocalização.');
-            return;
-        }
-
-        botaoGPS.innerText = '📍 Buscando sua localização...';
-        botaoGPS.disabled = true;
-
-        navigator.geolocation.getCurrentPosition(
-            (posicao) => {
-                const lat = posicao.coords.latitude;
-                const lng = posicao.coords.longitude;
-
-                map.setView([lat, lng], 15);
-
-                if (marcadorAtual) {
-                    marcadorAtual.setLatLng([lat, lng]);
-                } else {
-                    marcadorAtual = L.marker([lat, lng]).addTo(map);
-                }
-
-                document.getElementById('latitude').value = lat.toFixed(6);
-                document.getElementById('longitude').value = lng.toFixed(6);
-
-                botaoGPS.innerText = '📍 Usar Minha Localização Atual';
-                botaoGPS.disabled = false;
+    try {
+        const resposta = await fetch('/usuarios/cadastro', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            (erro) => {
-                alert('Não foi possível obter sua localização. Verifique as permissões de GPS.');
-                botaoGPS.innerText = '📍 Usar Minha Localização Atual';
-                botaoGPS.disabled = false;
-                console.error(erro);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+            body: JSON.stringify({
+                nome,
+                email,
+                senha,
+                tipo_usuario,
+                latitude,
+                longitude
+            })
+        });
+
+        const dados = await resposta.json();
+
+        if (resposta.ok) {
+            registroStatus.className = 'sucesso';
+            registroStatus.innerText = 'Conta criada com sucesso no MongoDB Primário!';
+            registroStatus.style.display = 'block';
+
+            // Preenche automaticamente o campo ID do formulário de mapa para facilitar a vida do usuário!
+            if (dados.usuario && dados.usuario._id) {
+                document.getElementById('usuarioId').value = dados.usuario._id;
+            } else if (dados._id) {
+                document.getElementById('usuarioId').value = dados._id;
             }
-        );
-    });
-}
+        } else {
+            throw new Error(dados.error || 'Erro ao registrar usuário.');
+        }
+    } catch (erro) {
+        registroStatus.className = 'erro';
+        registroStatus.innerText = erro.message;
+        registroStatus.style.display = 'block';
+    }
+});
