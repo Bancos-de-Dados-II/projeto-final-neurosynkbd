@@ -1,16 +1,18 @@
+// router/usuario-router.ts
 import { Router } from 'express';
 import { 
-    getUsuarios, 
-    getUsuarioByEmail, 
     criarUsuario, 
-    atualizarUsuario
+    loginUsuario, 
+    getUsuarios, 
+    getUsuarioByEmail 
 } from '../controller/usuario-controller.js';
+import { atualizarGeolocalizacao } from '../controller/localizacao-controller.js';
 
-const UsuarioRouter: Router = Router();
+const router = Router();
+router.post('/cadastro', criarUsuario);
+router.post('/login', loginUsuario);
+router.get('/', getUsuarios);
+router.get('/:email', getUsuarioByEmail);
+router.put('/localizacao', atualizarGeolocalizacao);
 
-UsuarioRouter.get('/', getUsuarios);
-UsuarioRouter.get('/:email', getUsuarioByEmail);
-UsuarioRouter.post('/', criarUsuario);
-UsuarioRouter.put('/:id', atualizarUsuario);
-
-export default UsuarioRouter;
+export default router;
