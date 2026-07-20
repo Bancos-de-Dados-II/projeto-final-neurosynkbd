@@ -5,14 +5,15 @@ import bcrypt from 'bcryptjs';
 export async function criarUsuario(req: Request, res: Response): Promise<Response | void> {
     try {
         const { nome, email, senha, tipo_usuario, latitude, longitude } = req.body;
-
-        if (!nome || !email || !senha || !tipo_usuario || !latitude || !longitude) {
-            return res.status(400).json({ error: "Todos os campos e a geolocalização inicial são obrigatórios." });
+        if (!nome || !email || !senha || !tipo_usuario) {
+            return res.status(400).json({ error: "Nome, e-mail, senha e tipo de usuário são obrigatórios." });
         }
         const usuarioExistente = await UsuarioMongo.findOne({ email });
         if (usuarioExistente) {
             return res.status(400).json({ error: "Este e-mail já está cadastrado." });
         }
+        const latFinal = latitude ? parseFloat(latitude) : -15.7801;
+        const lngFinal = longitude ? parseFloat(longitude) : -47.9292;
         const salt = await bcrypt.genSalt(10);
         const senhaCriptografada = await bcrypt.hash(senha, salt);
         const novoUsuario = await UsuarioMongo.create({
@@ -22,19 +23,18 @@ export async function criarUsuario(req: Request, res: Response): Promise<Respons
             tipo_usuario,
             localizacao: {
                 type: 'Point',
-                coordinates: [parseFloat(longitude), parseFloat(latitude)] // [longitude, latitude]
+                coordinates: [lngFinal, latFinal] 
             }
         });
-
         const resposta = novoUsuario.toObject();
         delete (resposta as any).senha;
-
         return res.status(201).json({
             message: "Usuário cadastrado com sucesso no banco primário MongoDB!",
             usuario: resposta
         });
 
     } catch (error: any) {
+        console.error("Erro ao criar usuário no MongoDB:", error);
         return res.status(500).json({ error: error.message });
     }
 }

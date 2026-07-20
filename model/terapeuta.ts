@@ -1,6 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../database/sequelize.js';
-import Usuario from './usuario.js';
 
 interface TerapeutaAttributes {
     usuarioId: string;
@@ -10,29 +9,27 @@ interface TerapeutaAttributes {
 class Terapeuta extends Model<TerapeutaAttributes> implements TerapeutaAttributes {
     public usuarioId!: string;
     public crefito!: string;
+
+    public static associate(models: any) {
+        Terapeuta.belongsTo(models.Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+    }
 }
 
 Terapeuta.init({
     usuarioId: {
         type: DataTypes.UUID,
         primaryKey: true,
-        references: {
-            model: Usuario,
-            key: 'id'
-        }
     },
     crefito: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true
     }
 }, {
     sequelize,
     modelName: 'Terapeuta',
-    tableName: 'Terapeutas'
+    tableName: 'Terapeutas',
+    timestamps: false
 });
-
-Terapeuta.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
-Usuario.hasOne(Terapeuta, { foreignKey: 'usuarioId', as: 'terapeuta' });
 
 export default Terapeuta;

@@ -3,17 +3,18 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export async function conectarMongo() {
-    try {
+export async function conectarMongo(): Promise<void> {
+  try {
+    const mongoUri = process.env.MONGO_URI;
 
-        await mongoose.connect(process.env.MONGO_URI!);
-
-        console.log("MongoDB conectado!");
-
-    } catch (erro) {
-
-        console.error(erro);
-        process.exit(1);
-
+    if (!mongoUri) {
+      throw new Error("A variável MONGO_URI não está definida no arquivo .env");
     }
+
+    await mongoose.connect(mongoUri);
+    console.log("🍃 MongoDB conectado com sucesso!");
+  } catch (erro) {
+    console.error("❌ Erro ao conectar ao MongoDB:", erro);
+    process.exit(1);
+  }
 }

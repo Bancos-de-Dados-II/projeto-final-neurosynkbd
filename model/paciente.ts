@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../database/sequelize.js';
-import Usuario from './usuario.js';
 
 interface PacienteAttributes {
     usuarioId: string;
@@ -14,16 +13,17 @@ class Paciente extends Model<PacienteAttributes, PacienteCreationAttributes> imp
     public usuarioId!: string;
     public tipo_neurodivergencia!: string;
     public cuidado_especial?: string;
+
+    public static associate(models: any) {
+        Paciente.belongsTo(models.Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+        Paciente.hasMany(models.BotaoSos, { foreignKey: 'pacienteId', as: 'alertasSos' });
+    }
 }
 
 Paciente.init({
     usuarioId: {
         type: DataTypes.UUID,
         primaryKey: true,
-        references: {
-            model: Usuario,
-            key: 'id'
-        }
     },
     tipo_neurodivergencia: {
         type: DataTypes.STRING,
@@ -36,10 +36,8 @@ Paciente.init({
 }, {
     sequelize,
     modelName: 'Paciente',
-    tableName: 'Pacientes'
+    tableName: 'Pacientes',
+    timestamps: false
 });
-
-Paciente.belongsTo(Usuario, { foreignKey: 'usuarioId' });
-Usuario.hasOne(Paciente, { foreignKey: 'usuarioId' });
 
 export default Paciente;
