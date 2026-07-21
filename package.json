@@ -1,10 +1,29 @@
 {
+  "name": "neurosync",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
-    "pg": "^8.22.0"
+    "express": "^5.2.1",
+    "mongoose": "^9.7.4",
+    "pg": "^8.22.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.6",
+    "@types/mongoose": "^5.11.96",
     "@types/node": "^26.1.1",
-    "@types/pg": "^8.20.0"
+    "typescript": "^7.0.2"
   }
 }
