@@ -38,6 +38,73 @@ export async function criarUsuario(req: Request, res: Response): Promise<Respons
         return res.status(500).json({ error: error.message });
     }
 }
+export async function getUsuarios(req: Request, res: Response): Promise<void> {
+    try {
+        const usuarios = await UsuarioMongo.find().select('-senha');
+        res.json(usuarios);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+}
+export async function getUsuarioById(req: Request, res: Response): Promise<Response | void> {
+    try {
+        const { id } = req.params;
+        const usuario = await UsuarioMongo.findById(id).select('-senha');
+        
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuário não encontrado no MongoDB.' });
+        }
+        return res.json(usuario);
+    } catch (error: any) {
+        return res.status(500).json({ error: "ID inválido ou erro no servidor: " + error.message });
+    }
+}
+export async function atualizarUsuario(req: Request, res: Response): Promise<Response | void> {
+    try {
+        const { id } = req.params;
+        const { nome, tipo_usuario, senha } = req.body;
+        const dadosAtualizados: any = {};
+        if (nome) dadosAtualizados.nome = nome;
+        if (tipo_usuario) dadosAtualizados.tipo_usuario = tipo_usuario;
+        if (senha) {
+            const salt = await bcrypt.genSalt(10);
+            dadosAtualizados.senha = await bcrypt.hash(senha, salt);
+        }
+
+        const usuarioAtualizado = await UsuarioMongo.findByIdAndUpdate(
+            id,
+            dadosAtualizados,
+            { new: true } 
+        ).select('-senha');
+
+        if (!usuarioAtualizado) {
+            return res.status(404).json({ error: 'Usuário não encontrado para atualização.' });
+        }
+
+        return res.status(200).json({
+            message: 'Usuário atualizado com sucesso!',
+            usuario: usuarioAtualizado
+        });
+    } catch (error: any) {
+        return res.status(500).json({ error: error.message });
+    }
+}
+export async function deletarUsuario(req: Request, res: Response): Promise<Response | void> {
+    try {
+        const { id } = req.params;
+        const usuarioDeletado = await UsuarioMongo.findByIdAndDelete(id);
+
+        if (!usuarioDeletado) {
+            return res.status(404).json({ error: 'Usuário não encontrado para deleção.' });
+        }
+
+        return res.status(200).json({
+            message: 'Usuário removido com sucesso do MongoDB!'
+        });
+    } catch (error: any) {
+        return res.status(500).json({ error: error.message });
+    }
+}
 export async function loginUsuario(req: Request, res: Response): Promise<Response | void> {
     try {
         const { email, senha } = req.body;
@@ -63,26 +130,5 @@ export async function loginUsuario(req: Request, res: Response): Promise<Respons
 
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
-    }
-}
-export async function getUsuarios(req: Request, res: Response): Promise<void> {
-    try {
-        const usuarios = await UsuarioMongo.find().select('-senha');
-        res.json(usuarios);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
-}
-export async function getUsuarioByEmail(req: Request, res: Response): Promise<Response | void> {
-    try {
-        const { email } = req.params;
-        const usuario = await UsuarioMongo.findOne({ email }).select('-senha');
-        
-        if (!usuario) {
-            return res.status(404).json({ error: 'Usuário não encontrado no MongoDB.' });
-        }
-        res.json(usuario);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
     }
 }
