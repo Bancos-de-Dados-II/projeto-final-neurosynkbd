@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import UsuarioRouter from './router/usuario-router.js';
 import { conectarMongo } from './database/mongodb.js';
+import { connectPostgres } from './database/postgres.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,8 +21,9 @@ app.use('/usuarios', UsuarioRouter);
 async function inicializarServidor() {
   try {
     await conectarMongo();
+    await connectPostgres();
     app.listen(port, () => {
-      console.log(`🍃 Servidor focado no MongoDB pronto!`);
+      console.log(`🍃 Servidor focado no MongoDB e PostgreSQL pronto!`);
       console.log(`🚀 NeuroSync rodando em: http://localhost:${port}`);
     });
 
