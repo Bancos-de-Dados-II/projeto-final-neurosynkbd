@@ -9,14 +9,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "ioredis": "^5.11.1",
     "mongoose": "^9.7.4",
     "pg": "^8.22.0",
     "pg-hstore": "^2.3.4",
+    "redis": "^6.1.0",
     "sequelize": "^6.37.8"
   },
   "devDependencies": {
@@ -27,4 +29,6 @@
     "@types/pg": "^8.20.0",
     "typescript": "^7.0.2"
   }
+
+  
 }
