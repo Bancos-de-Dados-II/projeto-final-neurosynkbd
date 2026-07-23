@@ -1,328 +1,255 @@
-/* ==========================================================================
-   1. IMPORTAÇÃO DE FONTES & VARIÁVEIS (Estética Fluid & Playful)
-   ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Raleway:wght@400;500;700&display=swap');
-
 :root {
-    /* Cores extraídas da Imagem 1 (Wild Strawberry) */
-    --strawberry-light: #D94936;
-    --strawberry-deep: #BB2E17;
-    --leaf-light: #849E67;
-    --leaf-medium: #42652B;
-    --leaf-dark: #203D1E;
-    
-    /* Gradientes inspirados na suavidade fluida da Imagem 2 */
-    --grad-bg-main: linear-gradient(135deg, #F4F8F4 0%, #FDF6F5 100%);
-    --grad-strawberry: linear-gradient(135deg, var(--strawberry-light) 0%, var(--strawberry-deep) 100%);
-    --grad-leaf: linear-gradient(135deg, var(--leaf-light) 0%, var(--leaf-medium) 100%);
-    --grad-header: linear-gradient(120deg, #849E67 0%, #42652B 50%, #203D1E 100%);
+  --strawberry: #d93829;
+  --strawberry-hover: #b82a1d;
+  --leaf: #2e7d32;
+  --leaf-hover: #1b5e20;
+  --bg-color: #f4f7f6;
+  --card-bg: #ffffff;
+  --text-main: #2b2b2b;
+  --accent-soft: #e8f5e9;
 }
 
-/* ==========================================================================
-   2. ESTRUTURA GERAL (Visual Orgânico e Fluido)
-   ========================================================================== */
-*, *::before, *::after {
-    box-sizing: border-box;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    font-family: 'Raleway', sans-serif;
-    background: var(--grad-bg-main);
-    color: var(--leaf-dark);
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    transition: background 0.4s ease, color 0.4s ease;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  padding-bottom: 40px;
 }
 
-header {
-    background: var(--grad-header);
-    color: white;
-    text-align: center;
-    padding: 60px 20px 80px 20px;
-    border-bottom-left-radius: 50% 20px;
-    border-bottom-right-radius: 50% 40px;
-    position: relative;
+/* Header */
+.app-header {
+  background-color: var(--card-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-header h1 {
-    font-family: 'Fredoka', sans-serif;
-    margin: 0;
-    font-size: 2.8rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+.logo-container h1 {
+  color: var(--leaf);
+  font-size: 1.8rem;
 }
 
+.logo-container h1 span {
+  color: var(--strawberry);
+}
+
+.role-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.nav-btn.active, .nav-btn:hover {
+  background-color: var(--leaf);
+  color: white;
+  border-color: var(--leaf);
+}
+
+.btn-auth {
+  border-color: var(--strawberry);
+  color: var(--strawberry);
+}
+
+/* Structural Layout */
 .container {
-    display: flex;
-    flex-direction: column;
-    max-width: 800px;
-    margin: -30px auto 40px auto;
-    gap: 30px;
-    padding: 0 20px;
-    position: relative;
-    z-index: 10;
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 0 15px;
 }
 
-/* ==========================================================================
-   3. CARDS (Formas Assimétricas e Cantos "Bubble" - Imagem 2)
-   ========================================================================== */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.grid-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+  .grid-two-columns { grid-template-columns: 1fr; }
+}
+
 .card {
-    background: #FFFFFF;
-    border-radius: 40px 24px 40px 24px; 
-    box-shadow: 0 15px 35px rgba(32, 61, 30, 0.05);
-    padding: 35px;
-    width: 100%;
-    border: none;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    position: relative;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.card:nth-child(2) {
-    border-radius: 24px 40px 24px 40px;
+.margin-top { margin-top: 20px; }
+
+/* Visual Components: Patient View */
+.patient-hero {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(32, 61, 30, 0.08);
+.btn-sos {
+  background-color: var(--strawberry);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 30px;
+  padding: 15px 30px;
+  margin-top: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(217, 56, 41, 0.4);
+  width: 100%;
 }
 
-.card h2 {
-    font-family: 'Fredoka', sans-serif;
-    color: var(--strawberry-deep);
-    font-size: 1.8rem;
-    margin-top: 0;
-    margin-bottom: 12px;
+.btn-sos:hover { background-color: var(--strawberry-hover); }
+
+.sos-banner {
+  background-color: #ffebee;
+  color: var(--strawberry);
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-weight: bold;
 }
 
-.instruction {
-    font-size: 0.95rem;
-    color: #616B5E;
-    margin-bottom: 25px;
-    line-height: 1.6;
+.panic-container {
+  margin: 15px 0;
 }
 
-/* ==========================================================================
-   4. FORMULÁRIOS & INPUTS MODERNOS
-   ========================================================================== */
-.form-group {
-    margin-bottom: 22px;
+.btn-stuck {
+  background-color: #fbc02d;
+  color: #333;
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 700;
-    color: var(--leaf-medium);
-    font-size: 0.9rem;
-    padding-left: 8px;
+.task-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
 
-.form-group input, 
-.form-group select {
-    width: 100%;
-    padding: 15px 20px;
-    border: 2px solid #E2EFE0;
-    background-color: #FAFCFA;
-    border-radius: 20px;
-    font-size: 1rem;
-    color: var(--leaf-dark);
-    font-family: 'Raleway', sans-serif;
-    outline: none;
-    transition: all 0.3s ease;
+.image-frame {
+  margin: 15px 0;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-    border-color: var(--strawberry-light);
-    background-color: #FFFFFF;
-    box-shadow: 0 0 0 4px rgba(217, 73, 54, 0.12);
+.image-frame img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
-.form-group input[readonly] {
-    background-color: #F1F5F0;
-    color: #5A7057;
-    border-color: #E2EFE0;
-    cursor: not-allowed;
+.badge-time, .badge-micro {
+  background: var(--accent-soft);
+  color: var(--leaf);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
 }
 
-.form-row {
-    display: flex;
-    gap: 15px;
+.btn-action {
+  background-color: var(--leaf);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
 }
 
-.half-width {
-    flex: 1;
+/* Forms and Inputs */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* ==========================================================================
-   5. BOTÕES "CÁPSULA" FLUIDOS
-   ========================================================================== */
-.form-gps-section,
-.form-submit-section {
-    display: flex;
-    justify-content: center;
-    width: 100%;
+label { font-weight: 600; font-size: 0.9rem; }
+
+input, textarea, select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
 }
 
-.btn-gps {
-    width: 100%;
-    max-width: 290px;
-    background: var(--grad-leaf);
-    color: white;
-    border: none;
-    padding: 14px 26px;
-    border-radius: 30px 15px 30px 30px; 
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    box-shadow: 0 6px 15px rgba(66, 101, 43, 0.2);
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
+.btn-primary {
+  background-color: var(--leaf);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-.btn-gps:hover {
-    box-shadow: 0 8px 20px rgba(66, 101, 43, 0.3);
-    transform: scale(1.02);
+.btn-secondary { background: #5c6bc0; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;}
+.btn-danger { background: var(--strawberry); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;}
+.btn-resolve { background: var(--leaf); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; }
+
+/* Status Boxes */
+.alert-box-inactive {
+  background: #e8f5e9;
+  color: var(--leaf);
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
 }
 
-.btn-submit {
-    width: 100%;
-    max-width: 290px;
-    background: var(--grad-strawberry);
-    color: white;
-    padding: 16px 32px;
-    border: none;
-    border-radius: 30px 30px 15px 30px;
-    font-family: 'Fredoka', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(187, 46, 23, 0.25);
-    transition: all 0.3s ease;
+.alert-box-active {
+  background: #ffebee;
+  color: var(--strawberry);
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
 }
 
-.btn-submit:hover {
-    box-shadow: 0 8px 22px rgba(187, 46, 23, 0.35);
-    transform: scale(1.02);
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
-/* ==========================================================================
-   6. MAPA, LEGENDA E STATUS
-   ========================================================================== */
-#map {
-    height: 480px;
-    width: 100%;
-    border-radius: 32px;
-    border: 6px solid #FFFFFF;
-    box-shadow: 0 10px 30px rgba(32, 61, 30, 0.04);
+.hidden { display: none !important; }
+
+/* Modal */
+.modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
 }
-
-.map-legend {
-    margin-top: 25px;
-    padding: 20px;
-    background-color: #FAFCFA;
-    border-radius: 24px;
-    border: 2px solid #E2EFE0;
+.modal-content {
+  background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; position: relative;
 }
-
-.map-legend h4 {
-    margin: 0 0 12px 0;
-    font-family: 'Fredoka', sans-serif;
-    color: var(--leaf-dark);
-}
-
-.map-legend ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    gap: 25px;
-}
-
-.map-legend li {
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.legend-icon {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 8px;
-}
-
-.icon-user { background-color: var(--strawberry-light); }
-.icon-support { background-color: var(--leaf-light); }
-
-#mensagem-status, #registro-status {
-    margin-top: 25px;
-    padding: 16px;
-    border-radius: 20px;
-    font-weight: 700;
-    text-align: center;
-}
-
-.sucesso { background-color: #E2F0D9; color: #385723; border: 1px solid #C5E0B4; }
-.erro { background-color: #FCE4D6; color: #C65911; border: 1px solid #F8CBAD; }
-
-/* ==========================================================================
-   7. MODO ESCURO (Baixo Estímulo - Conforto Noturno)
-   ========================================================================== */
-body.dark-mode {
-    background: linear-gradient(135deg, #111A10 0%, #1A1211 100%);
-    color: #E2ECE0;
-}
-
-body.dark-mode header {
-    background: linear-gradient(120deg, #162413 0%, #0B1209 100%);
-}
-
-body.dark-mode .card {
-    background-color: #192118;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-    color: #E2ECE0;
-}
-
-body.dark-mode .card h2, 
-body.dark-mode .form-group label {
-    color: var(--leaf-light);
-}
-
-body.dark-mode .form-group input, 
-body.dark-mode .form-group select {
-    background-color: #111611;
-    color: #FFFFFF;
-    border-color: #222E21;
-}
-
-body.dark-mode .form-group input[readonly] {
-    background-color: #0A0D0A;
-    color: #728570;
-}
-
-body.dark-mode .instruction {
-    color: #A3B2A1;
-}
-
-body.dark-mode .map-legend {
-    background-color: #111611;
-    border-color: #222E21;
-}
-
-body.dark-mode .map-legend h4 {
-    color: #E2ECE0;
-}
-
-body.dark-mode #map {
-    filter: invert(90%) hue-rotate(140deg) brightness(90%);
-    border-color: #192118;
-}
+.close-modal { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; }

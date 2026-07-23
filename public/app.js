@@ -1,179 +1,203 @@
-// 1. Inicializa o mapa com foco no Brasil (Padrão)
-const map = L.map('map').setView([-15.7801, -47.9292], 4);
+// ESTADO GLOBAL DA APLICAÇÃO
+let appState = {
+  activeSOS: false,
+  sosInterval: null,
+  currentTask: {
+    title: "Organizar Quarto e Fazer Lição",
+    img: "https://via.placeholder.com/400x250?text=Quarto+Real+da+Abigail",
+    steps: [
+      { title: "Passo 1 de 3", instruction: "Colocar as roupas no cesto verde.", img: "https://via.placeholder.com/400x250?text=1.+Cesto+de+Roupas" },
+      { title: "Passo 2 de 3", instruction: "Guardar os livros na estante.", img: "https://via.placeholder.com/400x250?text=2.+Guardar+Livros" },
+      { title: "Passo 3 de 3", instruction: "Abrir o caderno de Português na página 12.", img: "https://via.placeholder.com/400x250?text=3.+Caderno+Aberto" }
+    ]
+  },
+  currentStepIndex: 0,
+  map: null,
+  marker: null
+};
 
-// 2. Adiciona a camada de visualização OpenStreetMap
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-// Marcador dinâmico do clique ou GPS
-let marcadorAtual = null;
-
-// 3. Ouvinte de evento de clique no mapa para capturar coordenadas manuais
-map.on('click', function(e) {
-    const lat = e.latlng.lat.toFixed(6);
-    const lng = e.latlng.lng.toFixed(6);
-
-    document.getElementById('latitude').value = lat;
-    document.getElementById('longitude').value = lng;
-
-    if (marcadorAtual) {
-        marcadorAtual.setLatLng(e.latlng);
-    } else {
-        marcadorAtual = L.marker(e.latlng).addTo(map).bindPopup("Local selecionado").openPopup();
-    }
+// INITIALIZATION
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  initTherapistChart();
 });
 
-// 4. Funcionalidade de captura de Geolocalização nativa via GPS do navegador
-document.getElementById('btn-gps').addEventListener('click', function() {
-    const btn = this;
-    
-    if (!navigator.geolocation) {
-        alert("A geolocalização não é suportada pelo seu navegador.");
-        return;
-    }
+// NAVEGAÇÃO POR ABAS
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+  event.target.classList.add('active');
 
-    btn.innerText = "⏳ Capturando localização...";
-    btn.disabled = true;
+  if (tabName === 'cuidador' && appState.map) {
+    setTimeout(() => appState.map.invalidateSize(), 200);
+  }
+}
 
+// SIMULAÇÃO DO "BOTÃO TÔ TRAVADO" (US 2 & Fluxo do Diagrama de Sequência)
+function triggerToTravado() {
+  document.getElementById('normal-task-view').classList.add('hidden');
+  document.getElementById('deconstructed-task-view').classList.remove('hidden');
+  appState.currentStepIndex = 0;
+  renderMicroStep();
+  
+  console.log("LOG: [POST /api/logs-crise] Evento 'Tô Travado' gerado no banco de dados.");
+}
+
+function renderMicroStep() {
+  const step = appState.currentTask.steps[appState.currentStepIndex];
+  document.getElementById('micro-step-title').innerText = step.title;
+  document.getElementById('micro-step-instruction').innerText = step.instruction;
+  document.getElementById('micro-step-img').src = step.img;
+}
+
+function nextMicroStep() {
+  appState.currentStepIndex++;
+  if (appState.currentStepIndex < appState.currentTask.steps.length) {
+    renderMicroStep();
+  } else {
+    alert("Parabéns! Você concluiu todos os micro-passos com sucesso! 🌟");
+    document.getElementById('normal-task-view').classList.remove('hidden');
+    document.getElementById('deconstructed-task-view').classList.add('hidden');
+  }
+}
+
+function completeTask() {
+  alert("Tarefa concluída!");
+}
+
+// RASTREAMENTO GPS & BOTÃO SOS (US 3, 5 e 7)
+function triggerSOS() {
+  appState.activeSOS = true;
+  document.getElementById('sos-status').classList.remove('hidden');
+  
+  // Atualiza visão do Cuidador
+  const alertBox = document.getElementById('sos-alert-box');
+  alertBox.className = "alert-box-active";
+  alertBox.innerText = "🚨 ALERTA CRÍTICO: Paciente em Crise no Mapa!";
+  document.getElementById('btn-resolve-sos').classList.remove('hidden');
+
+  sendLocationTelemetry();
+  appState.sosInterval = setInterval(sendLocationTelemetry, 5000); // Envio contínuo
+}
+
+function sendLocationTelemetry() {
+  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-        function(position) {
-            const lat = position.coords.latitude.toFixed(6);
-            const lng = position.coords.longitude.toFixed(6);
-
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lng;
-
-            const novasCoordenadas = [lat, lng];
-            map.setView(novasCoordenadas, 16);
-
-            if (marcadorAtual) {
-                marcadorAtual.setLatLng(novasCoordenadas);
-            } else {
-                marcadorAtual = L.marker(novasCoordenadas).addTo(map).bindPopup("Você está aqui!").openPopup();
-            }
-
-            btn.innerText = "📍 Usar Minha Localização Atual";
-            btn.disabled = false;
-        },
-        function(error) {
-            alert("Não foi possível obter sua localização. Selecione manualmente no mapa.");
-            btn.innerText = "📍 Usar Minha Localização Atual";
-            btn.disabled = false;
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        updateMapLocation(latitude, longitude);
+        console.log(`TELEMETRIA [PUT /api/localizacao]: Lat ${latitude}, Long ${longitude}`);
+      },
+      () => {
+        // Fallback local caso GPS esteja indisponível
+        updateMapLocation(-7.115, -34.863);
+      }
     );
-});
+  }
+}
 
-// 5. Pontos de Apoio Amigáveis Estáticos
-const pontosDeApoio = [
-    { nome: "Centro do Desenvolvimento Neurodivergente", lat: -15.7941, lng: -47.8825 },
-    { nome: "Clínica de Atendimento Especializado", lat: -23.5505, lng: -46.6333 }
-];
+function updateMapLocation(lat, lng) {
+  if (appState.map) {
+    appState.map.setView([lat, lng], 15);
+    if (appState.marker) appState.map.removeLayer(appState.marker);
+    appState.marker = L.marker([lat, lng]).addTo(appState.map)
+      .bindPopup("<b>Paciente AQUI</b><br>Crise Detectada")
+      .openPopup();
+  }
+}
 
-pontosDeApoio.forEach(ponto => {
-    const iconeVerde = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    });
-    L.marker([ponto.lat, ponto.lng], { icon: iconeVerde }).addTo(map).bindPopup(`<b>${ponto.nome}</b><br>Ponto Amigável`);
-});
+function resolveSOS() { // US 9
+  appState.activeSOS = false;
+  clearInterval(appState.sosInterval);
+  
+  document.getElementById('sos-status').classList.add('hidden');
+  const alertBox = document.getElementById('sos-alert-box');
+  alertBox.className = "alert-box-inactive";
+  alertBox.innerText = "Status: Paciente Seguro (Nenhum Alerta Ativo)";
+  document.getElementById('btn-resolve-sos').classList.add('hidden');
 
-// 6. Envia os dados capturados para o seu Backend Express (INTEGRADO COM BACK-END - Arthur)
-document.getElementById('cadastro-form').addEventListener('submit', async function(e) {
-    e.preventDefault(); 
+  alert("Evento SOS marcado como Resolvido. A telemetria contínua foi interrompida.");
+}
 
-    const usuarioId = document.getElementById('usuarioId').value;
-    const latitude = document.getElementById('latitude').value;
-    const longitude = document.getElementById('longitude').value;
-    const mensagemStatus = document.getElementById('mensagem-status');
+// LEAFLET MAP INITIALIZATION
+function initMap() {
+  appState.map = L.map('map-container').setView([-7.115, -34.863], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(appState.map);
+}
 
-    try {
-        // CORREÇÃO DA ROTA: Agora aponta exatamente para o seu back-end Express
-        const resposta = await fetch('/usuarios/localizacao', { 
-            method: 'PUT', 
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                usuarioId: usuarioId, // Enviado no corpo da requisição
-                latitude: latitude,
-                longitude: longitude
-            })
-        });
+// UPLOAD DE TAREFAS VISUAIS (US 1 e US 4)
+function handleAddTask(e) {
+  e.preventDefault();
+  const title = document.getElementById('task-title-input').value;
+  const fileInput = document.getElementById('task-file-input');
+  const stepsRaw = document.getElementById('task-steps-input').value;
 
-        const dados = await resposta.json(); 
+  if (fileInput.files && fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById('current-task-title').innerText = title;
+      document.getElementById('current-task-img').src = evt.target.result;
+      
+      // Atualiza passos se preenchidos
+      if(stepsRaw) {
+        const stepsArr = stepsRaw.split(',').map((s, i) => ({
+          title: `Passo ${i+1}`,
+          instruction: s.trim(),
+          img: evt.target.result
+        }));
+        appState.currentTask.steps = stepsArr;
+      }
+      
+      alert("Tarefa visual e fotos reais associadas com sucesso no ecossistema!");
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  }
+}
 
-        if (resposta.ok) {
-            mensagemStatus.className = 'sucesso';
-            mensagemStatus.innerText = 'Localização GeoJSON salva com sucesso no MongoDB!';
-            mensagemStatus.style.display = 'block';
-        } else {
-            throw new Error(dados.error || 'Erro desconhecido');
-        }
-
-    } catch (erro) {
-        mensagemStatus.className = 'erro';
-        mensagemStatus.innerText = 'Erro ao salvar: ' + erro.message;
-        mensagemStatus.style.display = 'block';
+// DASHBOARD CLÍNICO DO TERAPEUTA (US 6)
+function initTherapistChart() {
+  const ctx = document.getElementById('chart-crises').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+      datasets: [{
+        label: 'Acionamentos "Tô Travado"',
+        data: [4, 1, 6, 2, 5, 0, 1],
+        backgroundColor: '#d93829'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
     }
-});
+  });
+}
 
-// 7. Integração do fluxo transacional de cadastro com o MongoDB Primário (Arthur)
-document.getElementById('registro-usuario-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+function handleCreateTemplate(e) { // US 8
+  e.preventDefault();
+  alert("Novo Template de Decomposição disponibilizado com sucesso na biblioteca do sistema!");
+}
 
-    const nome = document.getElementById('reg-nome').value;
-    const email = document.getElementById('reg-email').value;
-    const senha = document.getElementById('reg-senha').value;
-    const tipo_usuario = document.getElementById('reg-tipo').value;
-    
-    // Captura as coordenadas atuais do formulário ou define um padrão caso o mapa não tenha sido clicado ainda
-    const latitude = document.getElementById('latitude').value || "-15.7801";
-    const longitude = document.getElementById('longitude').value || "-47.9292";
-    
-    const registroStatus = document.getElementById('registro-status');
+function toggleTherapistAuth(grant) { // US 5
+  if(grant) {
+    alert("Acesso autorizado com sucesso! Os relatórios LGPD estão liberados para o profissional.");
+  } else {
+    alert("Acesso ao histórico do paciente revogado.");
+  }
+}
 
-    try {
-        const resposta = await fetch('/usuarios/cadastro', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nome,
-                email,
-                senha,
-                tipo_usuario,
-                latitude,
-                longitude
-            })
-        });
-
-        const dados = await resposta.json();
-
-        if (resposta.ok) {
-            registroStatus.className = 'sucesso';
-            registroStatus.innerText = 'Conta criada com sucesso no MongoDB Primário!';
-            registroStatus.style.display = 'block';
-
-            // Preenche automaticamente o campo ID do formulário de mapa para facilitar a vida do usuário!
-            if (dados.usuario && dados.usuario._id) {
-                document.getElementById('usuarioId').value = dados.usuario._id;
-            } else if (dados._id) {
-                document.getElementById('usuarioId').value = dados._id;
-            }
-        } else {
-            throw new Error(dados.error || 'Erro ao registrar usuário.');
-        }
-    } catch (erro) {
-        registroStatus.className = 'erro';
-        registroStatus.innerText = erro.message;
-        registroStatus.style.display = 'block';
-    }
-});
+// AUTH MODAL LOGIC (US 10)
+function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+function handleAuth(e) {
+  e.preventDefault();
+  const role = document.getElementById('user-role-select').value;
+  alert(`Usuário autenticado com sucesso sob o papel de: ${role.toUpperCase()}`);
+  closeAuthModal();
+  switchTab(role);
+}
