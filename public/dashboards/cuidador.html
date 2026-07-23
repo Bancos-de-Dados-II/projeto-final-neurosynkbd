@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurosync - Dashboard Cuidador</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- Ícones legais para o dashboard -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+
+    <!-- Cabeçalho Principal -->
+    <header class="dashboard-header">
+        <div class="header-brand">
+            <h2><i class="fa-solid fa-stethoscope"></i> Neurosync</h2>
+            <span class="badge">Painel do Cuidador</span>
+        </div>
+        <div class="header-user">
+            <span id="user-name"><i class="fa-regular fa-circle-user"></i> Olá, Cuidador</span>
+            <button id="btn-logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        </div>
+    </header>
+
+    <!-- Conteúdo do Dashboard -->
+    <main class="dashboard-container">
+        
+        <!-- Boas-vindas + Ações Rápidas -->
+        <section class="welcome-section">
+            <div class="welcome-text">
+                <h3>Gerenciamento de Pacientes</h3>
+                <p>Acompanhe a rotina, medicamentos e alertas dos seus pacientes em tempo real.</p>
+            </div>
+            <button class="btn-primary" onclick="vincularPaciente()">
+    <i class="fa-solid fa-user-plus"></i> Vincular Novo Paciente
+</button>
+        </section>
+
+        <!-- Grid de Cards Estatísticos (Resumo) -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <i class="fa-solid fa-hospital-user icon-blue"></i>
+                <div>
+                    <h4 id="count-pacientes">0</h4>
+                    <p>Pacientes Ativos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-pills icon-green"></i>
+                <div>
+                    <h4>--</h4>
+                    <p>Medicamentos Hoje</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-bell icon-orange"></i>
+                <div>
+                    <h4>0</h4>
+                    <p>Alertas Pendentes</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabela / Lista de Pacientes -->
+        <section class="table-card">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-list-check"></i> Meus Pacientes</h4>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Próxima Medicação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-pacientes">
+                        <!-- Exemplo temporário enquanto não vem do banco -->
+                        <tr>
+                            <td><strong>Paciente Exemplo</strong></td>
+                            <td><span class="status-badge active">Estável</span></td>
+                            <td>14:00 - Paracetamol</td>
+                            <td>
+                                <button class="btn-icon" title="Ver Detalhes"><i class="fa-solid fa-eye"></i></button>
+                                <button class="btn-icon" title="Registrar Rotina"><i class="fa-solid fa-notes-medical"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="../js/cuidador.js"></script>
+</body>
+</html>

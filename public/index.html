@@ -1,186 +1,52 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NeuroSync - Assistente Cognitivo e de Segurança</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Leaflet CSS para o Mapa do SOS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Chart.js para o Dashboard do Terapeuta -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neurosync - Autenticação</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js" defer></script>
 </head>
 <body>
+  <div class="auth-container">
+    <h1>🧠 Neurosync</h1>
+    
+    <!-- Formulário de Login -->
+    <form id="form-login">
+  <h2>Login</h2>
+  <input type="email" id="login-email" placeholder="E-mail" required>
+  <input type="password" id="login-senha" placeholder="Senha" required>
+  
+  <!-- Mudei type para "button" para a página NÃO recarregar -->
+  <button type="button" onclick="event.preventDefault(); fazerLoginDireto(event);">Entrar</button>
+</form>
+    <hr>
 
-  <!-- BANNER TOP / SELEÇÃO DE PERFIL -->
-  <header class="app-header">
-    <div class="logo-container">
-      <h1>Neuro<span>Sync</span></h1>
-      <small>Tecnologia Assistiva e Acessibilidade Cognitiva</small>
-    </div>
-    <nav class="role-selector">
-      <button class="nav-btn active" onclick="switchTab('paciente')">📱 Paciente</button>
-      <button class="nav-btn" onclick="switchTab('cuidador')">🏡 Cuidador</button>
-      <button class="nav-btn" onclick="switchTab('terapeuta')">📊 Painel Terapeuta</button>
-      <button class="nav-btn btn-auth" onclick="openAuthModal()">🔐 Login / Cadastro</button>
-    </nav>
-  </header>
+    <!-- Formulário de Cadastro -->
+    <form id="form-cadastro">
+      <h2>Criar Conta</h2>
+      <input type="text" id="cad-nome" placeholder="Nome Completo" required>
+      <input type="email" id="cad-email" placeholder="E-mail" required>
+      <input type="password" id="cad-senha" placeholder="Senha" required>
+      
+      <label for="cad-role">Perfil:</label>
+      <select id="cad-role" required>
+        <option value="Cuidador">Cuidador</option>
+        <option value="Paciente">Paciente</option>
+        <option value="Terapeuta">Terapeuta / Profissional</option>
+      </select>
 
-  <main class="container">
-
-    <!-- ==================== VISÃO DO PACIENTE ==================== -->
-    <section id="tab-paciente" class="tab-content active">
-      <div class="patient-hero">
-        <h2>Sua Rotina de Hoje</h2>
-        <p>Acompanhe suas atividades visuais passo a passo.</p>
-        
-        <!-- Botão SOS de Emergência -->
-        <button id="btn-sos" class="btn-sos" onclick="triggerSOS()">
-          🚨 BOTÃO SOS (EMERGÊNCIA)
-        </button>
-        <div id="sos-status" class="sos-banner hidden">
-          ⚠️ Sinal SOS Ativo! Enviando geolocalização à rede de apoio a cada 30s...
-        </div>
-      </div>
-
-      <!-- Container do Botão "Tô Travado" -->
-      <div class="panic-container">
-        <button class="btn-stuck" onclick="triggerToTravado()">
-          🧩 Tô Travado (Sinto Dificuldade)
-        </button>
-      </div>
-
-      <!-- Exibição Principal de Tarefas ou Micro-Passos (Desmontagem) -->
-      <div id="task-view-container" class="task-card">
-        <div id="normal-task-view">
-          <span class="badge-time">14:00 - Tarefa Atual</span>
-          <h3 id="current-task-title">Organizar Quarto e Fazer Lição</h3>
-          <div class="image-frame">
-            <img id="current-task-img" src="https://via.placeholder.com/400x250?text=Foto+Real+do+Quarto" alt="Tarefa Real" />
-          </div>
-          <button class="btn-action" onclick="completeTask()">✅ Concluir Tarefa</button>
-        </div>
-
-        <!-- Visão Sequencial dos Micro-Passos ("Tô Travado") -->
-        <div id="deconstructed-task-view" class="hidden">
-          <span class="badge-micro">Modo Assistido: Micro-passos</span>
-          <h3 id="micro-step-title">Passo 1 de 3</h3>
-          <div class="image-frame">
-            <img id="micro-step-img" src="https://via.placeholder.com/400x250?text=Passo+1:+Guardar+Livros" alt="Micro Passo" />
-          </div>
-          <p id="micro-step-instruction" class="instruction-text">Guarde apenas os livros azuis na prateleira inferior.</p>
-          <button id="btn-next-step" class="btn-action" onclick="nextMicroStep()">Próximo Passo ➔</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VISÃO DO CUIDADOR ==================== -->
-    <section id="tab-cuidador" class="tab-content">
-      <h2>Painel do Cuidador</h2>
-      <p>Gerencie a rotina visual com fotos reais do cotidiano do paciente.</p>
-
-      <div class="grid-two-columns">
-        <!-- Cadastrar Tarefa Visual / Upload -->
-        <div class="card">
-          <h3>📸 Cadastrar Tarefa / Foto Real (US 1 & US 4)</h3>
-          <form id="form-add-task" onsubmit="handleAddTask(event)">
-            <label>Título da Tarefa:</label>
-            <input type="text" id="task-title-input" placeholder="Ex: Escovar os Dentes" required />
-
-            <label>Foto Real do Ambiente/Objeto:</label>
-            <input type="file" id="task-file-input" accept="image/*" required />
-
-            <label>Vincular Micro-passos (Separados por vírgula):</label>
-            <textarea id="task-steps-input" placeholder="Ex: Pegar a escova, Colocar a pasta, Escovar os dentes"></textarea>
-
-            <button type="submit" class="btn-primary">Salvar na Rotina do Paciente</button>
-          </form>
-        </div>
-
-        <!-- Monitoramento de Emergência SOS -->
-        <div class="card">
-          <h3>🚨 Monitoramento em Tempo Real (US 7 & US 9)</h3>
-          <div id="sos-alert-box" class="alert-box-inactive">
-            Status: Paciente Seguro (Nenhum Alerta Ativo)
-          </div>
-          <div id="map-container" style="height: 220px; width: 100%; border-radius: 8px; margin-top: 10px;"></div>
-          <button id="btn-resolve-sos" class="btn-resolve hidden" onclick="resolveSOS()">
-            ✅ Marcar SOS como Resolvido
-          </button>
-        </div>
-      </div>
-
-      <!-- Vínculo Terapêutico -->
-      <div class="card margin-top">
-        <h3>🤝 Vínculo de Cuidado Digital / LGPD (US 5)</h3>
-        <p>Autorize ou revogue o acesso do terapeuta aos dados de acompanhamento clínico do paciente.</p>
-        <div class="flex-row">
-          <input type="email" id="therapist-email" placeholder="E-mail do Terapeuta autorizável..." />
-          <button class="btn-secondary" onclick="toggleTherapistAuth(true)">Autorizar Acesso</button>
-          <button class="btn-danger" onclick="toggleTherapistAuth(false)">Revogar Acesso</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VISÃO DO TERAPEUTA ==================== -->
-    <section id="tab-terapeuta" class="tab-content">
-      <h2>Dashboard Clínico do Terapeuta</h2>
-      <p>Análise de dados estruturados e métricas comportamentais (US 6).</p>
-
-      <div class="grid-two-columns">
-        <!-- Gráfico de Incidentes e Travamentos -->
-        <div class="card">
-          <h3>📈 Frequência de Uso do "Tô Travado" por Dia</h3>
-          <canvas id="chart-crises"></canvas>
-        </div>
-
-        <!-- Criar Templates de Decomposição -->
-        <div class="card">
-          <h3>📝 Templates de Decomposição (US 8)</h3>
-          <form onsubmit="handleCreateTemplate(event)">
-            <label>Nome da Receita/Template:</label>
-            <input type="text" id="template-title" placeholder="Ex: Protocolo para Banho" required />
-
-            <label>Sequência de Micro-instruções:</label>
-            <textarea id="template-steps" placeholder="1. Separar toalha&#10;2. Ligar o chuveiro morno&#10;3. Usar sabonete..." rows="4" required></textarea>
-
-            <button type="submit" class="btn-primary">Disponibilizar Template</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- MODAL DE AUTENTICAÇÃO / REGISTRO DE PAPÉIS (US 10) -->
-  <div id="auth-modal" class="modal hidden">
-    <div class="modal-content">
-      <span class="close-modal" onclick="closeAuthModal()">&times;</span>
-      <h3>Acesso ao NeuroSync</h3>
-      <form id="auth-form" onsubmit="handleAuth(event)">
-        <label>Nome Completo:</label>
-        <input type="text" required placeholder="Seu nome" />
-
-        <label>E-mail:</label>
-        <input type="email" required placeholder="seu@email.com" />
-
-        <label>Senha:</label>
-        <input type="password" required placeholder="******" />
-
-        <label>Selecione seu Papel no Sistema (US 10):</label>
-        <select id="user-role-select">
-          <option value="paciente">Paciente (Acesso Assistivo)</option>
-          <option value="cuidador">Cuidador / Familiar</option>
-          <option value="terapeuta">Profissional de Saúde / Terapeuta</option>
-        </select>
-
-        <button type="submit" class="btn-primary margin-top">Entrar / Registrar</button>
-      </form>
-    </div>
+      <button type="submit">Cadastrar</button>
+    </form>
   </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>
+<style>
+  /* Força os formulários a ficarem por cima de qualquer elemento invisível */
+  form {
+    position: relative !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    border: 2px solid red; /* Linha vermelha só pra confirmar que o formulário existe */
+  }
+</style>
