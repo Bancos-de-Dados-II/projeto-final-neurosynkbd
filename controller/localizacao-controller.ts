@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 
 export async function atualizarGeolocalizacao(req: Request, res: Response): Promise<Response | void> {

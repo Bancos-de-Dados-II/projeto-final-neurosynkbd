@@ -2,7 +2,7 @@
 import dns from 'node:dns';
 dns.setDefaultResultOrder('ipv4first');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
-import express, { Application } from 'express';
+import express, { type Application } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import UsuarioRouter from './router/usuario-router.js';

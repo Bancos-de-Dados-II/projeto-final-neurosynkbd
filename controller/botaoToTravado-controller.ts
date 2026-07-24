@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import BotaoToTravado from '../model/BotaoToTravado.js';
 import TarefaVisual from '../model/tarefa_Visual.js';
 

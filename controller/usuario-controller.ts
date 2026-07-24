@@ -1,9 +1,6 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 import bcrypt from 'bcryptjs';
-// usuario-controller.ts
-import { Request, Response } from 'express';
-import { UsuarioMongo } from '../model/usuarioMongo';
 
 export const buscarPacientePorId = async (req: Request, res: Response) => {
     try {
