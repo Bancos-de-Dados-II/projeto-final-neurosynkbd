@@ -1,24 +1,125 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Neurosync - Dashboard Médico</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurosync - Dashboard Médico</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
-  <header class="dashboard-header">
-    <h2> Painel Médico 👨‍⚕️</h2>
-    <div>
-      <span id="user-name"></span>
-      <button id="btn-logout">Sair</button>
-    </div>
-  </header>
+<body class="dashboard-body">
 
-  <main class="dashboard-content">
-    <h3>Relatórios Clínicos</h3>
-    <p>Acesse os dados de evolução e históricos dos pacientes cadastrados no sistema.</p>
-  </main>
+    <!-- Cabeçalho Principal -->
+    <header class="dashboard-header">
+        <div class="header-brand">
+            <h2><i class="fa-solid fa-user-doctor"></i> Neurosync</h2>
+            <span class="badge" style="background: #e0e7ff; color: #4338ca;">Painel Médico</span>
+        </div>
+        <div class="header-user">
+            <span id="user-name"><i class="fa-regular fa-circle-user"></i> Olá, Doutor(a)</span>
+            <button id="btn-logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        </div>
+    </header>
 
-  <script src="../js/medico.js"></script>
+    <!-- Conteúdo do Dashboard -->
+    <main class="dashboard-container">
+        
+        <!-- Boas-vindas -->
+        <section class="welcome-section">
+            <div class="welcome-text">
+                <h3>Acompanhamento Clínico</h3>
+                <p>Gerencie laudos, acompanhe relatórios e ajuste tratamentos dos seus pacientes.</p>
+            </div>
+            <button class="btn-primary" onclick="alert('Em breve: Novo diagnóstico')">
+                <i class="fa-solid fa-file-medical"></i> Novo Diagnóstico
+            </button>
+        </section>
+
+        <!-- Grid de Cards Estatísticos -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <i class="fa-solid fa-hospital-user icon-blue"></i>
+                <div>
+                    <h4 id="count-pacientes">0</h4>
+                    <p>Pacientes sob Cuidado</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-clipboard-check icon-green"></i>
+                <div>
+                    <h4>--</h4>
+                    <p>Laudos Atualizados</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-triangle-exclamation icon-orange"></i>
+                <div>
+                    <h4>0</h4>
+                    <p>Ocorrências Recentes</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabela de Pacientes do Médico -->
+        <section class="table-card">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-bed-pulse"></i> Lista de Pacientes</h4>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Diagnóstico Base</th>
+                            <th>Última Revisão</th>
+                            <th>Ações Clínicas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-pacientes-medico">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="../js/medico.js"></script>
+    <script>
+    const role = (localStorage.getItem('userRole') || '').toLowerCase();
+    
+    // Aceita tanto terapeuta quanto medico (e ignora maiúsculas/minúsculas)
+    if (!role || (role !== 'terapeuta' && role !== 'medico')) {
+        alert('Acesso não autorizado!');
+        window.location.href = '../index.html';
+    }
+</script>
+
+    // 2. Atualiza o nome do médico na interface
+    const nomeElemento = document.getElementById('nome-medico');
+    if (nomeElemento) {
+        nomeElemento.textContent = localStorage.getItem('userName') || 'Médico';
+    }
+
+    // 3. Busca lista de usuários/pacientes no backend
+    try {
+        const response = await fetch('/usuarios');
+        const usuarios = await response.json();
+        
+        // Filtra apenas quem é paciente
+        const pacientes = usuarios.filter(u => u.tipo_usuario === 'PACIENTE');
+        
+        console.log('✅ Pacientes encontrados no MongoDB:', pacientes);
+
+        // Se você tiver um container para listar os pacientes, pode iterar sobre eles:
+        // const container = document.getElementById('lista-pacientes');
+        // if (container) { ... }
+
+    } catch (err) {
+        console.error('❌ Erro ao carregar dados do dashboard:', err);
+    }
+});
+</script>
 </body>
 </html>

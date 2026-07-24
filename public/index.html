@@ -1,52 +1,42 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neurosync - Autenticação</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/auth.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurosync - Autenticação</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/auth.js" defer></script>
 </head>
 <body>
-  <div class="auth-container">
-    <h1>🧠 Neurosync</h1>
-    
-    <!-- Formulário de Login -->
-    <form id="form-login">
-  <h2>Login</h2>
-  <input type="email" id="login-email" placeholder="E-mail" required>
-  <input type="password" id="login-senha" placeholder="Senha" required>
-  
-  <!-- Mudei type para "button" para a página NÃO recarregar -->
-  <button type="button" onclick="event.preventDefault(); fazerLoginDireto(event);">Entrar</button>
-</form>
-    <hr>
+    <div class="auth-container">
+        <h1>🧠 Neurosync</h1>
 
-    <!-- Formulário de Cadastro -->
-    <form id="form-cadastro">
-      <h2>Criar Conta</h2>
-      <input type="text" id="cad-nome" placeholder="Nome Completo" required>
-      <input type="email" id="cad-email" placeholder="E-mail" required>
-      <input type="password" id="cad-senha" placeholder="Senha" required>
-      
-      <label for="cad-role">Perfil:</label>
-      <select id="cad-role" required>
-        <option value="Cuidador">Cuidador</option>
-        <option value="Paciente">Paciente</option>
-        <option value="Terapeuta">Terapeuta / Profissional</option>
-      </select>
+        <!-- Formulário de Login -->
+        <form id="form-login" onsubmit="fazerLoginDireto(event)">
+            <h2>Login</h2>
+            <input type="email" id="login-email" placeholder="E-mail" required>
+            <input type="password" id="login-senha" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
 
-      <button type="submit">Cadastrar</button>
-    </form>
-  </div>
+        <hr>
+
+        <!-- Formulário de Cadastro -->
+        <form id="form-cadastro" onsubmit="fazerCadastro(event)">
+            <h2>Criar Conta</h2>
+            <input type="text" id="cad-nome" placeholder="Nome Completo" required>
+            <input type="email" id="cad-email" placeholder="E-mail" required>
+            <input type="password" id="cad-senha" placeholder="Senha" required>
+
+            <label for="cad-role">Perfil:</label>
+            <select id="cad-role" required>
+  <option value="Cuidador">Cuidador</option>
+  <option value="Paciente">Paciente</option>
+  <option value="Terapeuta">Terapeuta / Profissional</option>
+</select>
+
+            <button type="submit">Cadastrar</button>
+        </form>
+    </div>
 </body>
 </html>
-<style>
-  /* Força os formulários a ficarem por cima de qualquer elemento invisível */
-  form {
-    position: relative !important;
-    z-index: 9999 !important;
-    pointer-events: auto !important;
-    border: 2px solid red; /* Linha vermelha só pra confirmar que o formulário existe */
-  }
-</style>

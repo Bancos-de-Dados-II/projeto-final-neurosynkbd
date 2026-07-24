@@ -1,6 +1,25 @@
 import { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 import bcrypt from 'bcryptjs';
+// usuario-controller.ts
+import { Request, Response } from 'express';
+import { UsuarioMongo } from '../model/usuarioMongo';
+
+export const buscarPacientePorId = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const paciente = await UsuarioMongo.findById(id).select('-senha'); // Oculta a senha por segurança
+
+        if (!paciente) {
+            return res.status(404).json({ mensagem: 'Paciente não encontrado.' });
+        }
+
+        res.status(200).json(paciente);
+    } catch (error) {
+        console.error('Erro ao buscar paciente:', error);
+        res.status(500).json({ mensagem: 'Erro interno no servidor.' });
+    }
+};
 
 export async function criarUsuario(req: Request, res: Response): Promise<Response | void> {
     try {
@@ -20,17 +39,26 @@ export async function criarUsuario(req: Request, res: Response): Promise<Respons
             nome,
             email,
             senha: senhaCriptografada,
-            tipo_usuario,
+            tipo_usuario: tipo_usuario.toUpperCase(),
             localizacao: {
                 type: 'Point',
                 coordinates: [lngFinal, latFinal] 
             }
         });
-        const resposta = novoUsuario.toObject();
-        delete (resposta as any).senha;
+
+        const resposta: any = novoUsuario.toObject();
+        delete resposta.senha;
+
+        // Padronização de campos para o front-end
+        resposta.userRole = resposta.tipo_usuario;
+        resposta.userName = resposta.nome;
+        resposta.tipo = resposta.tipo_usuario;
+
         return res.status(201).json({
-            message: "Usuário cadastrado com sucesso no banco primário MongoDB!",
-            usuario: resposta
+            message: "Usuário cadastrado com sucesso!",
+            usuario: resposta,
+            userRole: resposta.userRole,
+            userName: resposta.userName
         });
 
     } catch (error: any) {
@@ -38,14 +66,25 @@ export async function criarUsuario(req: Request, res: Response): Promise<Respons
         return res.status(500).json({ error: error.message });
     }
 }
+
 export async function getUsuarios(req: Request, res: Response): Promise<void> {
     try {
-        const usuarios = await UsuarioMongo.find().select('-senha');
+        const { tipo } = req.query;
+        const filtro: any = {};
+
+        if (tipo) {
+            // Usa Regex com 'i' para encontrar 'Paciente', 'PACIENTE', 'paciente', etc.
+            filtro.tipo_usuario = { $regex: new RegExp(`^${tipo}$`, 'i') };
+        }
+
+        const usuarios = await UsuarioMongo.find(filtro).select('-senha');
         res.json(usuarios);
     } catch (error: any) {
+        console.error("Erro ao buscar usuários:", error);
         res.status(500).json({ error: error.message });
     }
 }
+
 export async function getUsuarioById(req: Request, res: Response): Promise<Response | void> {
     try {
         const { id } = req.params;
@@ -59,6 +98,7 @@ export async function getUsuarioById(req: Request, res: Response): Promise<Respo
         return res.status(500).json({ error: "ID inválido ou erro no servidor: " + error.message });
     }
 }
+
 export async function atualizarUsuario(req: Request, res: Response): Promise<Response | void> {
     try {
         const { id } = req.params;
@@ -89,6 +129,7 @@ export async function atualizarUsuario(req: Request, res: Response): Promise<Res
         return res.status(500).json({ error: error.message });
     }
 }
+
 export async function deletarUsuario(req: Request, res: Response): Promise<Response | void> {
     try {
         const { id } = req.params;
@@ -105,6 +146,7 @@ export async function deletarUsuario(req: Request, res: Response): Promise<Respo
         return res.status(500).json({ error: error.message });
     }
 }
+
 export async function loginUsuario(req: Request, res: Response): Promise<Response | void> {
     try {
         const { email, senha } = req.body;
@@ -120,13 +162,21 @@ export async function loginUsuario(req: Request, res: Response): Promise<Respons
         if (!senhaValida) {
             return res.status(401).json({ error: "E-mail ou senha incorretos." });
         }
-        const resposta = usuario.toObject();
-        delete (resposta as any).senha;
 
-        return res.status(200).json({
-            message: "Login realizado com sucesso no MongoDB!",
-            usuario: resposta
-        });
+        const resposta: any = usuario.toObject();
+        delete resposta.senha;
+
+        // Padronização de chaves mantendo a formatação original do Mongoose ('Paciente', 'Cuidador', 'Terapeuta')
+const role = resposta.tipo_usuario || resposta.tipo || '';
+
+return res.status(200).json({
+    message: "Login realizado com sucesso!",
+    usuario: resposta,
+    userRole: role,
+    tipo_usuario: role,
+    userName: resposta.nome
+});
+       
 
     } catch (error: any) {
         return res.status(500).json({ error: error.message });

@@ -1,24 +1,188 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Neurosync - Dashboard Paciente</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurosync - Dashboard Paciente</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --success: #2ecc71;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* Header / Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .btn-sair {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Container Principal */
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .welcome-card {
+            background: linear-gradient(135deg, #0066cc, #004488);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,102,204,0.2);
+        }
+
+        .welcome-card h1 { margin: 0 0 8px 0; font-size: 1.8rem; }
+        .welcome-card p { margin: 0; opacity: 0.9; }
+
+        /* Grid de Seções */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Item de Lembrete */
+        .reminder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            background: #fafbfc;
+        }
+
+        .reminder-info strong { display: block; font-size: 1rem; }
+        .reminder-info span { font-size: 0.85rem; color: var(--text-sub); }
+
+        .btn-check {
+            background: #e8f8f0;
+            color: var(--success);
+            border: 1px solid var(--success);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-check:hover {
+            background: var(--success);
+            color: white;
+        }
+    </style>
 </head>
 <body>
-  <header class="dashboard-header">
-    <h2> Minha Rotina 🌸</h2>
-    <div>
-      <span id="user-name"></span>
-      <button id="btn-logout">Sair</button>
+
+    <nav class="navbar">
+        <div class="brand">
+            🌸 <span>Neurosync</span>
+        </div>
+        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+    </nav>
+
+    <div class="container">
+        <!-- Card de Boas-vindas -->
+        <div class="welcome-card">
+            <h1 id="boas-vindas-nome">Olá! 👋</h1>
+            <p>Acompanhe suas tarefas e medicação de hoje.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Coluna Principal: Lembretes -->
+            <main>
+                <div class="card">
+                    <div class="card-title">⏰ Lembretes do Dia</div>
+                    
+                    <div id="lista-lembretes">
+                        <!-- Exemplos de cards de remédio/tarefa -->
+                        <div class="reminder-item">
+                            <div class="reminder-info">
+                                <strong>Donepezila 10mg</strong>
+                                <span>Horário: 08:00 • Tomar com água</span>
+                            </div>
+                            <button class="btn-check" onclick="marcarFeito(this)">Concluir</button>
+                        </div>
+
+                        <div class="reminder-item">
+                            <div class="reminder-info">
+                                <strong>Exercício de Memória</strong>
+                                <span>Horário: 14:00 • Aplicativo Neurosync</span>
+                            </div>
+                            <button class="btn-check" onclick="marcarFeito(this)">Concluir</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Coluna Lateral: Resumo / Ajuda -->
+            <aside>
+                <div class="card">
+                    <div class="card-title">👨‍⚕️ Meu Cuidador</div>
+                    <p style="margin-bottom: 5px; font-weight: 600;">Carlos Silva</p>
+                    <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 0;">Disponível para suporte</p>
+                </div>
+            </aside>
+        </div>
     </div>
-  </header>
 
-  <main class="dashboard-content">
-    <h3>Lembretes do Dia</h3>
-    <p>Acompanhe suas tarefas e horários de medicação definidos pelo seu cuidador.</p>
-  </main>
-
-  <script src="../js/paciente.js"></script>
+    <script src="../js/paciente.js"></script>
 </body>
 </html>

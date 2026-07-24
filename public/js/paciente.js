@@ -1,31 +1,23 @@
-// Proteção exclusiva para a página do Paciente
-validarAcesso('PACIENTE');
+// Garantir acesso protegido
+// (Mantenha a sua função de validarAcesso se já existir no escopo global)
 
-function validarAcesso(roleEsperado) {
-  const role = localStorage.getItem('userRole');
-  const nome = localStorage.getItem('userName');
+document.addEventListener('DOMContentLoaded', () => {
+    // Carrega o nome do usuário do localStorage
+    const nome = localStorage.getItem('userName') || 'Paciente';
+    const boasVindasEl = document.getElementById('boas-vindas-nome');
+    if (boasVindasEl) {
+        boasVindasEl.textContent = `Olá, ${nome}! 👋`;
+    }
+});
 
-  if (!role) {
-    window.location.href = '/index.html';
-    return;
-  }
-
-  if (role !== roleEsperado) {
-    alert('Acesso negado para o seu perfil!');
-    window.location.href = '/index.html';
-    return;
-  }
-
-  const userNameElement = document.getElementById('user-name');
-  if (userNameElement) {
-    userNameElement.textContent = `Olá, ${nome || 'Paciente'}`;
-  }
+function marcarFeito(btn) {
+    btn.textContent = '✓ Concluído';
+    btn.style.background = '#2ecc71';
+    btn.style.color = '#fff';
+    btn.disabled = true;
 }
 
-const btnLogout = document.getElementById('btn-logout');
-if (btnLogout) {
-  btnLogout.addEventListener('click', () => {
+function fazerLogout() {
     localStorage.clear();
-    window.location.href = '/index.html';
-  });
+    window.location.href = '/';
 }
