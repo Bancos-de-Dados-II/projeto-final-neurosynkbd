@@ -1,6 +1,6 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import sequelize from '../database/sequelize'; 
-import Paciente from './paciente'; 
+import { DataTypes, Model, type Optional } from 'sequelize';
+import sequelize from '../database/sequelize.js'; 
+import Paciente from './paciente.js'; 
 
 interface BotaoSosAttributes {
     id: string;

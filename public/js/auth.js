@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000/usuarios';
 
 window.fazerLoginDireto = async function(e) {
     if (e) e.preventDefault();
@@ -15,7 +15,7 @@ window.fazerLoginDireto = async function(e) {
     }
 
     try {
-        const response = await fetch('/usuarios/login', {
+        const response = await fetch(`${API_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, senha })

@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model, type Optional } from 'sequelize';
 import sequelize from '../database/sequelize.js';
 import TarefaVisual from './tarefa_Visual.js';
 import Cuidador from './cuidador.js';
