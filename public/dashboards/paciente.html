@@ -135,10 +135,16 @@
         <div class="brand">
             🌸 <span>Neurosync</span>
         </div>
-        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+        <button id="btn-sos" onclick="acionarSOS()" style="background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🚨 SOS</button>
+      <button class="btn-sair" onclick="fazerLogout()">Sair</button>
     </nav>
 
     <div class="container">
+        <!-- Banner de Alerta do SOS (Oculto por padrão) -->
+<div id="sos-alert-banner" style="display: none; background-color: #ff4d4d; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;">
+  🚨 SOS ACIONADO! A ajuda está a caminho. Sua localização está sendo enviada ao cuidador.
+  <div id="sos-timer" style="margin-top: 5px; font-size: 0.9rem;">Tempo ativo: 0s</div>
+</div>
         <!-- Card de Boas-vindas -->
         <div class="welcome-card">
             <h1 id="boas-vindas-nome">Olá! 👋</h1>
@@ -146,28 +152,73 @@
         </div>
 
         <div class="dashboard-grid">
-            <!-- Coluna Principal: Lembretes -->
-            <main>
-                <div class="card">
-                    <div class="card-title">⏰ Lembretes do Dia</div>
-                    
-                    <div id="lista-lembretes">
-                        <!-- Exemplos de cards de remédio/tarefa -->
-                        <div class="reminder-item">
-                            <div class="reminder-info">
-                                <strong>Donepezila 10mg</strong>
-                                <span>Horário: 08:00 • Tomar com água</span>
-                            </div>
-                            <button class="btn-check" onclick="marcarFeito(this)">Concluir</button>
-                        </div>
+            <!-- Card de Lembretes do Dia -->
 
-                        <div class="reminder-item">
-                            <div class="reminder-info">
-                                <strong>Exercício de Memória</strong>
-                                <span>Horário: 14:00 • Aplicativo Neurosync</span>
-                            </div>
-                            <button class="btn-check" onclick="marcarFeito(this)">Concluir</button>
-                        </div>
+ <!-- Card de Lembretes do Dia -->
+<div class="card" style="background-color: #f8f9fa; border-radius: 12px; padding: 20px;">
+  <div class="card-title" style="font-size: 1.25rem; font-weight: 600; color: #2c3e50; margin-bottom: 15px;">
+    ⏰ Lembretes do Dia
+  </div>
+
+  <!-- Lista de Tarefas com Mídia e Estilo de Baixo Contraste -->
+  <div id="lista-lembretes">
+    <!-- Exemplo de Card de Tarefa com Imagem Real -->
+    <!-- Exemplo de como deve estar o card no paciente.html -->
+<div class="tarefa-item" data-tarefa-id="101">
+    <img src="" alt="Foto da Tarefa" class="foto-tarefa-img" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+    <div>
+        <h3>Escovar os dentes</h3>
+        <p>Horário: 08:00</p>
+    </div>
+</div>
+      
+      <div style="flex: 1;">
+        <!-- Título com fonte clara e baixo contraste (Acessibilidade) -->
+        <h4 id="tarefa-titulo" style="margin: 0 0 5px 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 1.1rem; color: #34495e; font-weight: 600;">
+          Escovar os dentes
+        </h4>
+        <p style="margin: 0; font-size: 0.9rem; color: #7f8c8d;">Horário: 08:00</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão Tô Travado -->
+  <div id="btn-to-travado-container" style="margin-top: 15px;">
+    <button id="btn-to-travado" onclick="iniciarToTravado()" style="background-color: #ff9f43; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
+      🤯 Tô Travado (Passo a Passo)
+    </button>
+  </div>
+
+  <!-- Container dos Micro-passos -->
+  <div id="micro-passos-container" style="display: none; margin-top: 15px; border: 2px solid #ff9f43; padding: 15px; border-radius: 8px; background-color: #fff;">
+    <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; color: #2c3e50;">🧩 Sequência de Micro-passos</div>
+    <span id="passo-numero" style="font-weight: bold; color: #2e86de; display: block;">Passo 1</span>
+    <div style="margin: 15px 0; min-height: 40px;">
+      <p id="micro-passo-comando" style="font-size: 1.1rem; font-weight: 600; color: #34495e; margin: 0;"></p>
+    </div>
+    <button id="btn-proximo-passo" onclick="proximoMicroPasso()" style="width: 100%; padding: 10px; background-color: #2e86de; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+      Concluir este passo ➔
+    </button>
+  </div>
+</div>
+                        <!-- Botão Tô Travado -->
+<!-- Container do Botão Tô Travado -->
+<div id="btn-to-travado-container" style="margin-top: 15px; text-align: center;">
+</div>
+
+<!-- Container de Micro-passos (Oculto por padrão) -->
+<div id="micro-passos-container" class="card" style="display: none; margin-top: 15px; border: 2px solid #ff9f43; padding: 15px; border-radius: 8px;">
+  <div class="card-title" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">🧩 Sequência de Micro-passos</div>
+  
+  <!-- AQUI FICAM OS TEXTOS DOS PASSOS -->
+  <span id="passo-numero" style="font-weight: bold; color: #2e86de; display: block;">Passo 1</span>
+  
+  <div style="margin: 15px 0; min-height: 40px;">
+    <p id="micro-passo-comando" style="font-size: 1.1rem; font-weight: 600; color: #333; margin: 0;"></p>
+  </div>
+
+  <button id="btn-proximo-passo" onclick="proximoMicroPasso()" style="width: 100%; padding: 10px; background-color: #2e86de; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Concluir este passo ➔</button>
+</div>
                     </div>
                 </div>
             </main>

@@ -63,8 +63,7 @@ window.fazerCadastro = async function(e) {
     const nome = nomeEl ? nomeEl.value.trim() : '';
     const email = emailEl ? emailEl.value.trim() : '';
     const senha = senhaEl ? senhaEl.value.trim() : '';
-    const tipo_usuario = tipoEl ? tipoEl.value : '';
-
+    const tipo_usuario = tipoEl ? tipoEl.value.toLowerCase() : '';
     if (!nome || !email || !senha || !tipo_usuario) {
         alert("Preencha todos os campos obrigatórios!");
         return;

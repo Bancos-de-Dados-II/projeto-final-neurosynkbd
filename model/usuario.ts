@@ -29,11 +29,12 @@ const UsuarioSchema = new Schema<IUsuario>(
       type: String, 
       required: [true, 'A senha é obrigatória.'] 
     },
-    tipo_usuario: { 
-      type: String, 
-      enum: ['Paciente', 'Cuidador', 'Terapeuta'], 
-      default: 'Paciente' 
-    },
+    tipo_usuario: {
+  type: String,
+  required: true,
+  enum: ['Paciente', 'Cuidador', 'Terapeuta', 'Medico'],
+  set: (val: string) => val ? val.charAt(0).toUpperCase() + val.slice(1).toLowerCase() : val
+}
     localizacao: {
       type: {
         type: String,

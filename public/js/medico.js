@@ -31,8 +31,19 @@ function validarAcesso(roleEsperado) {
   
 
 document.addEventListener('DOMContentLoaded', () => {
-    carregarPacientesMedico();
-    configurarLogout();
+  carregarPacientesMedico();
+  configurarLogout();
+
+  // Atualiza a saudação com o nome do paciente vinculado
+  const pacienteSalvo = localStorage.getItem('neurosync_paciente_ativo');
+  if (pacienteSalvo) {
+    const paciente = JSON.parse(pacienteSalvo);
+    const elementoSaudacao = document.getElementById('nome-paciente-boas-vindas') || document.querySelector('.welcome-section h1, .welcome-section h2');
+    
+    if (elementoSaudacao && paciente.nome) {
+      elementoSaudacao.innerText = `Olá, ${paciente.nome}! 👋`;
+    }
+  }
 });
 
 async function carregarPacientesMedico() {

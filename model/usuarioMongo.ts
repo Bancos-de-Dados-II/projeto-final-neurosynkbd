@@ -14,7 +14,7 @@ const UsuarioSchema = new Schema<IUsuario>({
     nome: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true }, 
-    tipo_usuario: { type: String, enum: ['Paciente', 'Cuidador', 'Terapeuta'], required: true },
+    tipo_usuario: { type: String, required: true },
     localizacao: {
         type: {
             type: String,
@@ -31,3 +31,8 @@ const UsuarioSchema = new Schema<IUsuario>({
 UsuarioSchema.index({ localizacao: '2dsphere' });
 
 export const UsuarioMongo = model<IUsuario>('Usuario', UsuarioSchema);
+// Adicione o campo pacientesVinculados no seu Schema
+pacientesVinculados: [{
+  type: Schema.Types.ObjectId,
+  ref: 'Usuario'
+}]

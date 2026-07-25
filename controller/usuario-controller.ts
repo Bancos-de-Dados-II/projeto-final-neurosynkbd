@@ -19,51 +19,52 @@ export const buscarPacientePorId = async (req: Request, res: Response) => {
 };
 
 export async function criarUsuario(req: Request, res: Response): Promise<Response | void> {
-    try {
-        const { nome, email, senha, tipo_usuario, latitude, longitude } = req.body;
-        if (!nome || !email || !senha || !tipo_usuario) {
-            return res.status(400).json({ error: "Nome, e-mail, senha e tipo de usuário são obrigatórios." });
-        }
-        const usuarioExistente = await UsuarioMongo.findOne({ email });
-        if (usuarioExistente) {
-            return res.status(400).json({ error: "Este e-mail já está cadastrado." });
-        }
-        const latFinal = latitude ? parseFloat(latitude) : -15.7801;
-        const lngFinal = longitude ? parseFloat(longitude) : -47.9292;
-        const salt = await bcrypt.genSalt(10);
-        const senhaCriptografada = await bcrypt.hash(senha, salt);
-        const novoUsuario = await UsuarioMongo.create({
-            nome,
-            email,
-            senha: senhaCriptografada,
-            tipo_usuario: tipo_usuario.toUpperCase(),
-            localizacao: {
-                type: 'Point',
-                coordinates: [lngFinal, latFinal] 
-            }
-        });
-
-        const resposta: any = novoUsuario.toObject();
-        delete resposta.senha;
-
-        // Padronização de campos para o front-end
-        resposta.userRole = resposta.tipo_usuario;
-        resposta.userName = resposta.nome;
-        resposta.tipo = resposta.tipo_usuario;
-
-        return res.status(201).json({
-            message: "Usuário cadastrado com sucesso!",
-            usuario: resposta,
-            userRole: resposta.userRole,
-            userName: resposta.userName
-        });
-
-    } catch (error: any) {
-        console.error("Erro ao criar usuário no MongoDB:", error);
-        return res.status(500).json({ error: error.message });
+  try {
+    const { nome, email, senha, tipo_usuario, latitude, longitude } = req.body;
+    if (!nome || !email || !senha || !tipo_usuario) {
+      return res.status(400).json({ error: "Nome, e-mail, senha e tipo de usuário são obrigatórios." });
     }
-}
 
+    const usuarioExistente = await UsuarioMongo.findOne({ email });
+    if (usuarioExistente) {
+      return res.status(400).json({ error: "Este e-mail já está cadastrado." });
+    }
+
+    const latFinal = latitude ? parseFloat(latitude) : -15.7801;
+    const lngFinal = longitude ? parseFloat(longitude) : -47.9292;
+    const salt = await bcrypt.genSalt(10);
+    const senhaCriptografada = await bcrypt.hash(senha, salt);
+
+    const novoUsuario = await UsuarioMongo.create({
+      nome,
+      email,
+      senha: senhaCriptografada,
+      tipo_usuario: tipo_usuario.charAt(0).toUpperCase() + tipo_usuario.slice(1).toLowerCase(),
+      localizacao: {
+        type: 'Point',
+        coordinates: [lngFinal, latFinal]
+      }
+    });
+
+    const resposta: any = novoUsuario.toObject();
+    delete resposta.senha;
+
+    resposta.userRole = resposta.tipo_usuario;
+    resposta.userName = resposta.nome;
+    resposta.tipo = resposta.tipo_usuario;
+
+    return res.status(201).json({
+      message: "Usuário cadastrado com sucesso!",
+      usuario: resposta,
+      userRole: resposta.userRole,
+      userName: resposta.userName
+    });
+
+  } catch (error: any) {
+    console.error("Erro ao criar usuário no MongoDB:", error);
+    return res.status(500).json({ error: error.message });
+  }
+}
 export async function getUsuarios(req: Request, res: Response): Promise<void> {
     try {
         const { tipo } = req.query;
@@ -179,3 +180,36 @@ return res.status(200).json({
         return res.status(500).json({ error: error.message });
     }
 }
+export const vincularPaciente = async (req: Request, res: Response) => {
+    console.log(">>> ROTA DE VÍNCULO FOI CHAMADA! <<<", req.body);
+  try {
+    const { emailPaciente, idCuidador } = req.body;
+
+    if (!emailPaciente || !idCuidador) {
+      return res.status(400).json({ mensagem: 'E-mail do paciente e ID do cuidador são obrigatórios.' });
+    }
+
+    // 1. Procura se existe um usuário com esse e-mail E que seja 'Paciente'
+    const paciente = await UsuarioMongo.findOne({
+      email: emailPaciente.toLowerCase().trim(),
+      tipo_usuario: 'Paciente'
+    });
+
+    if (!paciente) {
+      return res.status(404).json({ mensagem: 'Paciente não encontrado com este e-mail.' });
+    }
+
+    // 2. Atualiza o cuidador adicionando o ID do paciente na lista dele
+    await UsuarioMongo.findByIdAndUpdate(idCuidador, {
+      $addToSet: { pacientesVinculados: paciente._id } // $addToSet evita duplicados
+    });
+
+    return res.status(200).json({
+      mensagem: 'Paciente vinculado com sucesso!',
+      paciente: { id: paciente._id, nome: paciente.nome, email: paciente.email }
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({ mensagem: 'Erro ao vincular paciente.', erro: error.message });
+  }
+};

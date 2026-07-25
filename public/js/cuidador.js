@@ -93,12 +93,53 @@ async function carregarPacientes() {
 // ----------------------------------------------------
 // FUNCIONALIDADE 3: Ações dos Botões
 // ----------------------------------------------------
-function vincularPaciente() {
-    const emailPaciente = prompt("Digite o e-mail do paciente que deseja vincular:");
-    if (emailPaciente) {
-        alert(`Solicitação enviada para vincular o paciente com e-mail: ${emailPaciente}`);
-        // Aqui futuramente chamaremos um fetch POST para salvar o vínculo no MongoDB
+async function vincularPaciente() {
+  // Pega o input da tela ou faz o prompt caso o input não exista
+  const inputEmail = document.getElementById('email-paciente-input');
+  let email = inputEmail ? inputEmail.value.trim() : '';
+
+  if (!email) {
+    email = prompt("Digite o e-mail do paciente que deseja vincular:");
+  }
+
+  if (!email) {
+    alert('⚠️ Por favor, informe o e-mail do paciente.');
+    return;
+  }
+
+  // Pega o ID do cuidador logado
+  const idCuidador = localStorage.getItem('usuarioId');
+
+  try {
+    // ✅ Como deve ficar
+const resposta = await fetch('/usuarios/vincular-paciente', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        emailPaciente: email,
+        idCuidador: idCuidador
+      })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(dados.mensagem || 'Erro ao vincular paciente');
     }
+
+    alert(`✅ ${dados.mensagem}`);
+
+    // Limpa o input após enviar
+    if (inputEmail) inputEmail.value = '';
+
+    // Recarrega a página para atualizar a lista
+    location.reload();
+
+  } catch (erro) {
+    alert(`❌ ${erro.message}`);
+  }
 }
 
 function verDetalhes(idPaciente) {
@@ -119,3 +160,165 @@ function configurarLogout() {
         });
     }
 }
+// =========================================================
+// MÓDULO CUIDADOR (US 4, US 5, US 7 & US 9)
+// =========================================================
+
+// Variáveis Globais para o Mapa e SOS
+let map = null;
+let marker = null;
+let sosAtivoId = null;
+
+// ---------------------------------------------------------
+// US 7 & 9: MONITORAMENTO DE SOS E MAPA (LEAFLET)
+// ---------------------------------------------------------
+function inicializarMapa(lat, lng) {
+  if (!map) {
+    map = L.map('mapa-sos').setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    marker = L.marker([lat, lng]).addTo(map)
+      .bindPopup('📍 Paciente em emergência!')
+      .openPopup();
+  } else {
+    marker.setLatLng([lat, lng]);
+    map.setView([lat, lng], 15);
+  }
+}
+
+// Polling automático para checar SOS (Local Storage + Fallback API)
+function checarStatusSOS() {
+  const cardAlerta = document.getElementById('card-alerta-sos');
+  const sosDataRaw = localStorage.getItem('neurosync_sos_status');
+
+  if (sosDataRaw) {
+    const sosData = JSON.parse(sosDataRaw);
+
+    if (sosData.ativo) {
+      if (cardAlerta) cardAlerta.style.display = 'block';
+
+      const lat = sosData.lat || -23.55052;
+      const lng = sosData.lng || -46.633308;
+
+      setTimeout(() => {
+        inicializarMapa(lat, lng);
+        if (map) map.invalidateSize();
+      }, 200);
+      return; // Já resolveu localmente!
+    } else {
+      if (cardAlerta) cardAlerta.style.display = 'none';
+    }
+  }
+
+  // Tenta o backend caso exista
+  fetch('/api/sos/active')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.ativo) {
+        sosAtivoId = data.id;
+        if (cardAlerta) cardAlerta.style.display = 'block';
+
+        const lat = data.latitude || -23.55052;
+        const lng = data.longitude || -46.633308;
+
+        setTimeout(() => {
+          inicializarMapa(lat, lng);
+          if (map) map.invalidateSize();
+        }, 200);
+      } else if (cardAlerta) {
+        cardAlerta.style.display = 'none';
+        sosAtivoId = null;
+      }
+    })
+    .catch(err => console.warn('Aguardando servidor/API de SOS...', err));
+}
+
+// Botão: Marcar SOS como Resolvido
+window.marcarSosComoResolvido = function() {
+  // Limpa o estado local de emergência
+  const sosDataRaw = localStorage.getItem('neurosync_sos_status');
+  if (sosDataRaw) {
+    const sosData = JSON.parse(sosDataRaw);
+    sosData.ativo = false;
+    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+  }
+
+  const cardAlerta = document.getElementById('card-alerta-sos');
+  if (cardAlerta) cardAlerta.style.display = 'none';
+
+  alert('✅ SOS marcado como resolvido!');
+
+  if (!sosAtivoId) return;
+
+  fetch(`/api/sos/${sosAtivoId}/resolve`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'resolvido' })
+  })
+  .then(res => {
+    sosAtivoId = null;
+  })
+  .catch(err => console.error('Erro ao resolver SOS na API:', err));
+};
+
+// ---------------------------------------------------------
+// US 4: UPLOAD DE FOTOS PARA PERSONALIZAÇÃO
+// ---------------------------------------------------------
+window.fazerUploadFoto = function(event) {
+  // Evita que o formulário recarregue a página antes de salvar a foto
+  if (event) event.preventDefault();
+  
+  const fileInput = document.getElementById('input-foto-tarefa');
+  const inputId = document.getElementById('input-tarefa-id');
+
+  if (!fileInput || !fileInput.files[0]) {
+    alert('⚠️ Por favor, escolha um arquivo de imagem primeiro!');
+    return;
+  }
+
+  const tarefaId = inputId ? inputId.value.trim() : '101';
+  if (!tarefaId) {
+    alert('⚠️ Digite o ID da tarefa (ex: 101)!');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const imagemBase64 = e.target.result;
+
+    // Salva com a chave exata que o paciente procura
+    localStorage.setItem(`foto_tarefa_${tarefaId}`, imagemBase64);
+    
+    console.log(`💾 Foto salva no localStorage com a chave: foto_tarefa_${tarefaId}`);
+    alert(`✅ Foto vinculada com sucesso à tarefa ${tarefaId}!`);
+  };
+
+  reader.readAsDataURL(file);
+};
+
+// ---------------------------------------------------------
+// US 5: PERMISSÕES DO TERAPEUTA (TOGGLE SWITCH)
+// ---------------------------------------------------------
+window.alterarPermissaoTerapeuta = function(autorizado) {
+  const pacienteId = localStorage.getItem('paciente_id') || 1;
+
+  fetch(`/api/patients/${pacienteId}/permissions`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ compartilhar_terapeuta: autorizado })
+  })
+  .then(res => {
+    console.log(`Permissão do terapeuta atualizada para: ${autorizado}`);
+  })
+  .catch(err => console.error('Erro ao atualizar permissão:', err));
+};
+
+// Inicialização de escuta automática
+document.addEventListener('DOMContentLoaded', () => {
+  checarStatusSOS();
+  setInterval(checarStatusSOS, 5000); // Checa a cada 5 segundos
+});
