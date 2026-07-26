@@ -3,19 +3,30 @@ import { UsuarioMongo } from '../model/usuarioMongo.js';
 import bcrypt from 'bcryptjs';
 
 export const buscarPacientePorId = async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const paciente = await UsuarioMongo.findById(id).select('-senha'); // Oculta a senha por segurança
+  try {
+    const { id } = req.params;
+    
+    // 1. Busca o paciente
+    const paciente = await UsuarioMongo.findById(id).select('-senha');
 
-        if (!paciente) {
-            return res.status(404).json({ mensagem: 'Paciente não encontrado.' });
-        }
-
-        res.status(200).json(paciente);
-    } catch (error) {
-        console.error('Erro ao buscar paciente:', error);
-        res.status(500).json({ mensagem: 'Erro interno no servidor.' });
+    if (!paciente) {
+      return res.status(404).json({ mensagem: 'Paciente não encontrado.' });
     }
+
+    // 2. Busca no banco qual Cuidador tem o ID deste paciente no array pacientesVinculados
+    const cuidador = await UsuarioMongo.findOne({
+      pacientesVinculados: id
+    }).select('nome email');
+
+    // 3. Retorna os dados do paciente + os dados do cuidador encontrado
+    res.status(200).json({
+      ...paciente.toObject(),
+      cuidador: cuidador ? { nome: cuidador.nome, email: cuidador.email } : null
+    });
+  } catch (error) {
+    console.error('Erro ao buscar paciente:', error);
+    res.status(500).json({ mensagem: 'Erro interno no servidor.' });
+  }
 };
 
 export async function criarUsuario(req: Request, res: Response): Promise<Response | void> {
@@ -181,28 +192,24 @@ return res.status(200).json({
     }
 }
 export const vincularPaciente = async (req: Request, res: Response) => {
-    console.log(">>> ROTA DE VÍNCULO FOI CHAMADA! <<<", req.body);
   try {
-    const { emailPaciente, idCuidador } = req.body;
+    const { idCuidador, emailPaciente } = req.body;
+    console.log("--> Dados recebidos no body:", req.body);
 
-    if (!emailPaciente || !idCuidador) {
-      return res.status(400).json({ mensagem: 'E-mail do paciente e ID do cuidador são obrigatórios.' });
-    }
-
-    // 1. Procura se existe um usuário com esse e-mail E que seja 'Paciente'
-    const paciente = await UsuarioMongo.findOne({
-      email: emailPaciente.toLowerCase().trim(),
-      tipo_usuario: 'Paciente'
-    });
+    // 1. Busca o paciente pelo e-mail
+    const paciente = await UsuarioMongo.findOne({ email: emailPaciente });
+    console.log("--> Paciente encontrado:", paciente);
 
     if (!paciente) {
       return res.status(404).json({ mensagem: 'Paciente não encontrado com este e-mail.' });
     }
 
-    // 2. Atualiza o cuidador adicionando o ID do paciente na lista dele
-    await UsuarioMongo.findByIdAndUpdate(idCuidador, {
-      $addToSet: { pacientesVinculados: paciente._id } // $addToSet evita duplicados
-    });
+    // 2. Atualiza o cuidador
+    const resultado = await UsuarioMongo.findByIdAndUpdate(idCuidador, {
+      $addToSet: { pacientesVinculados: paciente._id }
+    }, { new: true });
+    
+    console.log("--> Cuidador apos update:", resultado);
 
     return res.status(200).json({
       mensagem: 'Paciente vinculado com sucesso!',
@@ -210,6 +217,7 @@ export const vincularPaciente = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
+    console.error("--> Erro no catch:", error);
     return res.status(500).json({ mensagem: 'Erro ao vincular paciente.', erro: error.message });
   }
 };

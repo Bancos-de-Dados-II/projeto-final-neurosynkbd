@@ -167,4 +167,41 @@ function carregarFotosSalvas() {
 }
 
 // Executa ao carregar a página
-document.addEventListener('DOMContentLoaded', carregarFotosSalvas);
+document.addEventListener('DOMContentLoaded', () => {
+  carregarFotosSalvas();
+  carregarDadosPaciente();
+});
+// Busca os dados do paciente e atualiza o nome do cuidador na tela
+async function carregarDadosPaciente() {
+  try {
+    // Pega o ID do paciente salvo no login/localStorage (ou usa 1 como fallback)
+    const pacienteId = localStorage.getItem('paciente_id') || localStorage.getItem('usuarioId');
+
+    if (!pacienteId) {
+      console.warn('⚠️ ID do paciente não encontrado no localStorage.');
+      return;
+    }
+
+    // Faz a requisição para a rota que atualizamos no backend
+    const response = await fetch(`/usuarios/paciente/${pacienteId}`);
+    
+    if (!response.ok) {
+      throw new Error('Erro ao buscar dados do paciente');
+    }
+
+    const paciente = await response.json();
+
+    // Atualiza o nome do cuidador no HTML
+    // (Ajuste 'nome-cuidador' para o ID correto do elemento no seu HTML se for diferente)
+    const elNomeCuidador = document.getElementById('nome-cuidador');
+    if (elNomeCuidador) {
+      if (paciente.cuidador && paciente.cuidador.nome) {
+        elNomeCuidador.innerText = paciente.cuidador.nome;
+      } else {
+        elNomeCuidador.innerText = 'Sem cuidador vinculado';
+      }
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar dados do paciente:', error);
+  }
+}
