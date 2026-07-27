@@ -1,33 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neurosync - Dashboard Cuidador</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurosync - Dashboard Cuidador</title>
 
-  <!-- 1. Estilo Principal do seu Projeto (Restaura todo o visual) -->
-  <link rel="stylesheet" href="../css/style.css">
+    <!-- 1. Estilo Principal do Projeto -->
+   
+    <link rel="stylesheet" href="../css/cuidador.css">
 
-  <!-- 2. Ícones do Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 2. Ícones do Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-  <!-- 3. CSS do Leaflet (Para o Mapa de SOS) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- 3. CSS e JS do Leaflet (Para o Mapa de SOS) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
-  <!-- 4. JS do Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
 </head>
 <body class="dashboard-body">
 
-    <!-- Cabeçalho Principal -->
-    <header class="dashboard-header">
-        <div class="header-brand">
-            <h2><i class="fa-solid fa-stethoscope"></i> Neurosync</h2>
-            <span class="badge">Painel do Cuidador</span>
+   <header class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-brain logo-icon"></i>
+            <span>Neurosync</span>
+            <span class="role-badge">Painel do Cuidador</span>
         </div>
-        <div class="header-user">
-            <span id="user-name"><i class="fa-regular fa-circle-user"></i> Olá, Cuidador</span>
-            <button id="btn-logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        <div class="nav-user">
+            <span class="user-greeting" id="user-name">
+                <i class="fa-regular fa-circle-user"></i> Olá, Cuidador
+            </span>
+            <button id="btn-logout" type="button" class="btn-sair">Sair</button>
         </div>
     </header>
 
@@ -35,77 +38,85 @@
     <main class="dashboard-container">
         
         <!-- Boas-vindas + Ações Rápidas -->
-        <section class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-        <div class="welcome-text">
-          <h3>Gerenciamento de Pacientes</h3>
-          <p>Acompanhe a rotina, medicamentos e alertas dos seus pacientes em tempo real.</p>
-        </div>
-        
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <input type="text" id="email-paciente-input" placeholder="E-mail do paciente..." style="padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none;">
-          <button class="btn-primary" onclick="vincularPaciente()" style="white-space: nowrap; margin: 0;">
-            <i class="fa-solid fa-user-plus"></i> Vincular Novo Paciente
-          </button>
-        </div>
-      </section>
+        <section class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <div class="welcome-text">
+                <h3>Gerenciamento de Pacientes</h3>
+                <p>Acompanhe a rotina, medicamentos e alertas dos seus pacientes em tempo real.</p>
+            </div>
+            
+            <form id="form-vincular-paciente" onsubmit="event.preventDefault(); vincularPaciente();" style="display: flex; gap: 8px; align-items: center;">
+                <label for="email-paciente-input" class="sr-only">E-mail do Paciente</label>
+                <input type="email" id="email-paciente-input" placeholder="E-mail do paciente..." required style="padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none;">
+                <button type="submit" class="btn-primary" style="white-space: nowrap; margin: 0;">
+                    <i class="fa-solid fa-user-plus"></i> Vincular Novo Paciente
+                </button>
+            </form>
+        </section>
+
         <!-- =========================================================
-     US 7 & 9: MONITORAMENTO DE SOS E MAPA
-========================================================= -->
-<section id="card-alerta-sos" class="table-card" style="display: none; border-left: 5px solid #e74c3c; margin-bottom: 20px;">
-  <div class="table-header">
-    <h4 style="color: #e74c3c;"><i class="fa-solid fa-triangle-exclamation"></i> ALERTA DE SOS ATIVO!</h4>
-  </div>
-  <div style="padding: 15px;">
-    <p>O paciente acionou o botão de emergência. Acompanhe a localização abaixo:</p>
-    
-    <!-- Container do Mapa Leaflet -->
-    <div id="mapa-sos" style="height: 280px; width: 100%; border-radius: 8px; margin: 15px 0;"></div>
+             US 7 & 9: MONITORAMENTO DE SOS E MAPA
+        ========================================================= -->
+        <section id="card-alerta-sos" class="table-card" style="display: none; border-left: 5px solid #e74c3c; margin-bottom: 20px;">
+            <div class="table-header">
+                <h4 style="color: #e74c3c;"><i class="fa-solid fa-triangle-exclamation"></i> ALERTA DE SOS ATIVO!</h4>
+            </div>
+            <div style="padding: 15px;">
+                <p>O paciente acionou o botão de emergência. Acompanhe a localização abaixo:</p>
+                
+                <!-- Container do Mapa Leaflet -->
+                <div id="mapa-sos" style="height: 280px; width: 100%; border-radius: 8px; margin: 15px 0;"></div>
 
-    <button id="btn-resolver-sos" class="btn-primary" onclick="marcarSosComoResolvido()" style="background-color: #2ecc71; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer;">
-      <i class="fa-solid fa-check-circle"></i> Marcar como Resolvido
-    </button>
-  </div>
-</section>
+                <button id="btn-resolver-sos" class="btn-primary" onclick="marcarSosComoResolvido()" style="background-color: #2ecc71; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer;">
+                    <i class="fa-solid fa-check-circle"></i> Marcar como Resolvido
+                </button>
+            </div>
+        </section>
 
-<!-- =========================================================
-     US 4: UPLOAD DE FOTOS PARA PERSONALIZAÇÃO DA ROTINA
-========================================================= -->
-<section class="table-card" style="margin-bottom: 20px;">
-  <div class="table-header">
-    <h4><i class="fa-solid fa-camera"></i> Personalização de Tarefas (Upload de Fotos)</h4>
-  </div>
-  <div style="padding: 15px;">
-    <form id="form-upload-foto" onsubmit="fazerUploadFoto(event)">
-  <!-- Campo do Arquivo -->
-  <input type="file" id="input-foto-tarefa" accept="image/*" required />
+        <!-- =========================================================
+             US 4: UPLOAD DE FOTOS PARA PERSONALIZAÇÃO DA ROTINA
+        ========================================================= -->
+        <section class="table-card" style="margin-bottom: 20px;">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-camera"></i> Personalização de Tarefas (Upload de Fotos)</h4>
+            </div>
+            <div style="padding: 15px;">
+                <form id="form-upload-foto" onsubmit="fazerUploadFoto(event)" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <!-- Campo do Arquivo -->
+                    <div>
+                        <label for="input-foto-tarefa" class="sr-only">Selecione a Imagem</label>
+                        <input type="file" id="input-foto-tarefa" accept="image/*" required />
+                    </div>
 
-  <!-- Campo do ID da Tarefa -->
-  <input type="text" id="input-tarefa-id" placeholder="Ex: 101" value="101" required />
+                    <!-- Campo do ID da Tarefa -->
+                    <div>
+                        <label for="input-tarefa-id" class="sr-only">ID da Tarefa</label>
+                        <input type="text" id="input-tarefa-id" placeholder="Ex: 101" value="101" required style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                    </div>
 
-  <!-- Botão de Envio -->
-  <button type="submit" class="btn-primary">Enviar e Vincular Foto</button>
-</form>
-  </div>
-</section>
+                    <!-- Botão de Envio -->
+                    <button type="submit" class="btn-primary">Enviar e Vincular Foto</button>
+                </form>
+            </div>
+        </section>
 
-<!-- US 5: PERMISSÕES & VÍNCULO TERAPÊUTICO -->
-<section class="table-card" style="margin-bottom: 20px;">
-  <div class="table-header">
-    <h4><i class="fa-solid fa-user-shield"></i> Permissões & Vínculo Terapêutico</h4>
-  </div>
-  <div style="padding: 15px; display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <strong>Compartilhar dados com o Terapeuta</strong>
-      <p style="margin: 0; font-size: 0.85rem; color: #666;">Autoriza o terapeuta a visualizar históricos de rotina e relatórios de travamento.</p>
-    </div>
-    
-    <!-- Chave de Alternância (Toggle Switch) -->
-    <label class="switch">
-      <input type="checkbox" id="toggle-permissao-terapeuta" onchange="alterarPermissaoTerapeuta(this.checked)">
-      <span class="slider"></span>
-    </label>
-  </div>
-</section>
+        <!-- US 5: PERMISSÕES & VÍNCULO TERAPÊUTICO -->
+        <section class="table-card" style="margin-bottom: 20px;">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-user-shield"></i> Permissões & Vínculo Terapêutico</h4>
+            </div>
+            <div style="padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <strong>Compartilhar dados com o Terapeuta</strong>
+                    <p style="margin: 0; font-size: 0.85rem; color: #666;">Autoriza o terapeuta a visualizar históricos de rotina e relatórios de travamento.</p>
+                </div>
+                
+                <!-- Chave de Alternância (Toggle Switch) -->
+                <label class="switch">
+                    <input type="checkbox" id="toggle-permissao-terapeuta" onchange="alterarPermissaoTerapeuta(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
 
         <!-- Grid de Cards Estatísticos (Resumo) -->
         <section class="stats-grid">
@@ -166,6 +177,6 @@
 
     </main>
 
-    <script src="../js/cuidador.js"></script>
+    <script src="../js/cuidador.js" defer></script>
 </body>
 </html>

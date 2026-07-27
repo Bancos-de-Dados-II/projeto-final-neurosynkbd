@@ -4,80 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neurosync - Dashboard Médico</title>
-    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/medico.css">
 </head>
-<body class="dashboard-body">
+<body>
 
-    <!-- Cabeçalho Principal -->
-    <header class="dashboard-header">
-        <div class="header-brand">
-            <h2><i class="fa-solid fa-user-doctor"></i> Neurosync</h2>
-            <span class="badge" style="background: #e0e7ff; color: #4338ca;">Painel Médico</span>
+    <header class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-brain logo-icon"></i>
+            <span>Neurosync</span>
+            <span class="role-badge">Painel Médico</span>
         </div>
-        <div class="header-user">
-            <span id="user-name"><i class="fa-regular fa-circle-user"></i> Olá, Doutor(a)</span>
-            <button id="btn-logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        <div class="nav-user">
+            <span class="user-greeting" id="user-name">
+                <i class="fa-regular fa-circle-user"></i> Olá, Doutor(a)
+            </span>
+            <button id="btn-logout" type="button" class="btn-sair">Sair</button>
         </div>
     </header>
 
-    <!-- Conteúdo do Dashboard -->
-    <main class="dashboard-container">
+    <main class="container">
         
-        <!-- Boas-vindas -->
-        <section class="welcome-section">
-            <div class="welcome-text">
-                <h3>Acompanhamento Clínico</h3>
+        <section class="welcome-card">
+            <div>
+                <h1>Acompanhamento Clínico 👋</h1>
                 <p>Gerencie laudos, acompanhe relatórios e ajuste tratamentos dos seus pacientes.</p>
             </div>
-            <button class="btn-primary" onclick="alert('Em breve: Novo diagnóstico')">
-                <i class="fa-solid fa-file-medical"></i> Novo Diagnóstico
+            <button type="button" class="btn-novo-diag" id="btn-novo-diagnostico">
+                <i class="fa-solid fa-plus"></i> Novo Diagnóstico
             </button>
         </section>
 
-        <!-- Grid de Cards Estatísticos -->
         <section class="stats-grid">
-            <div class="stat-card">
-                <i class="fa-solid fa-hospital-user icon-blue"></i>
-                <div>
-                    <h4 id="count-pacientes">0</h4>
+            <article class="card stat-card">
+                <div class="stat-icon icon-green">
+                    <i class="fa-solid fa-hospital-user"></i>
+                </div>
+                <div class="stat-info">
+                    <h2 id="count-pacientes">0</h2>
                     <p>Pacientes sob Cuidado</p>
                 </div>
-            </div>
-            <div class="stat-card">
-                <i class="fa-solid fa-clipboard-check icon-green"></i>
-                <div>
-                    <h4>--</h4>
+            </article>
+
+            <article class="card stat-card">
+                <div class="stat-icon icon-blue">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h2>--</h2>
                     <p>Laudos Atualizados</p>
                 </div>
-            </div>
-            <div class="stat-card">
-                <i class="fa-solid fa-triangle-exclamation icon-orange"></i>
-                <div>
-                    <h4>0</h4>
+            </article>
+
+            <article class="card stat-card">
+                <div class="stat-icon icon-orange">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="stat-info">
+                    <h2>0</h2>
                     <p>Ocorrências Recentes</p>
                 </div>
-            </div>
+            </article>
         </section>
 
-        <!-- Tabela de Pacientes do Médico -->
-        <section class="table-card">
-            <div class="table-header">
-                <h4><i class="fa-solid fa-bed-pulse"></i> Lista de Pacientes</h4>
-            </div>
+        <section class="card">
+            <h2 class="card-title">
+                <i class="fa-solid fa-bed-pulse" style="color: var(--primary-dark);"></i> 
+                Lista de Pacientes
+            </h2>
             
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Paciente</th>
-                            <th>Diagnóstico Base</th>
-                            <th>Última Revisão</th>
-                            <th>Ações Clínicas</th>
+                            <th scope="col">Paciente</th>
+                            <th scope="col">Diagnóstico Base</th>
+                            <th scope="col">Última Revisão</th>
+                            <th scope="col">Ações Clínicas</th>
                         </tr>
                     </thead>
                     <tbody id="lista-pacientes-medico">
-                        <!-- Preenchido via JS -->
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-sub); padding: 20px;">
+                                Carregando lista de pacientes...
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -87,39 +98,90 @@
 
     <script src="../js/medico.js"></script>
     <script>
-    const role = (localStorage.getItem('userRole') || '').toLowerCase();
-    
-    // Aceita tanto terapeuta quanto medico (e ignora maiúsculas/minúsculas)
-    if (!role || (role !== 'terapeuta' && role !== 'medico')) {
-        alert('Acesso não autorizado!');
-        window.location.href = '../index.html';
-    }
-</script>
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
-    // 2. Atualiza o nome do médico na interface
-    const nomeElemento = document.getElementById('nome-medico');
-    if (nomeElemento) {
-        nomeElemento.textContent = localStorage.getItem('userName') || 'Médico';
-    }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const role = (localStorage.getItem('userRole') || '').toLowerCase();
+            
+            if (!role || (role !== 'terapeuta' && role !== 'medico')) {
+                alert('Acesso não autorizado!');
+                window.location.href = '../index.html';
+                return;
+            }
 
-    // 3. Busca lista de usuários/pacientes no backend
-    try {
-        const response = await fetch('/usuarios');
-        const usuarios = await response.json();
-        
-        // Filtra apenas quem é paciente
-        const pacientes = usuarios.filter(u => u.tipo_usuario === 'PACIENTE');
-        
-        console.log('✅ Pacientes encontrados no MongoDB:', pacientes);
+            const btnNovoDiag = document.getElementById('btn-novo-diagnostico');
+            if (btnNovoDiag) {
+                btnNovoDiag.addEventListener('click', () => {
+                    alert('Em breve: Novo diagnóstico');
+                });
+            }
 
-        // Se você tiver um container para listar os pacientes, pode iterar sobre eles:
-        // const container = document.getElementById('lista-pacientes');
-        // if (container) { ... }
+            const nomeElemento = document.getElementById('user-name');
+            if (nomeElemento) {
+                const nomeUsuario = localStorage.getItem('userName') || 'Doutor(a)';
+                nomeElemento.innerHTML = `<i class="fa-regular fa-circle-user"></i> Olá, ${escapeHTML(nomeUsuario)}`;
+            }
 
-    } catch (err) {
-        console.error('❌ Erro ao carregar dados do dashboard:', err);
-    }
-});
-</script>
+            const btnLogout = document.getElementById('btn-logout');
+            if (btnLogout) {
+                btnLogout.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = '../index.html';
+                });
+            }
+
+            try {
+                const response = await fetch('/usuarios');
+                if (response.ok) {
+                    const usuarios = await response.json();
+                    const pacientes = usuarios.filter(u => u.tipo_usuario === 'PACIENTE');
+
+                    const countEl = document.getElementById('count-pacientes');
+                    if (countEl) countEl.textContent = pacientes.length;
+
+                    const tbody = document.getElementById('lista-pacientes-medico');
+                    if (tbody) {
+                        if (pacientes.length === 0) {
+                            tbody.innerHTML = `
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-sub); padding: 20px;">
+                                        Nenhum paciente cadastrado até o momento.
+                                    </td>
+                                </tr>`;
+                        } else {
+                            tbody.innerHTML = pacientes.map(p => {
+                                const nome = escapeHTML(p.nome || p.email);
+                                const diagnostico = escapeHTML(p.diagnostico || 'Em acompanhamento');
+                                const ultimaRevisao = escapeHTML(p.ultima_revisao || 'Hoje');
+                                
+                                return `
+                                    <tr>
+                                        <td><strong>${nome}</strong></td>
+                                        <td>${diagnostico}</td>
+                                        <td>${ultimaRevisao}</td>
+                                        <td>
+                                            <button type="button" class="btn-acao" onclick="alert('Ver prontuário de ${nome.replace(/'/g, "\\'")}')">
+                                                📄 Prontuário
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('❌ Erro ao carregar dados do dashboard:', err);
+            }
+        });
+    </script>
 </body>
 </html>
