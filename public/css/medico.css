@@ -1,0 +1,267 @@
+:root {
+            /* Palenta de Cores extraída da interface Neurosync */
+         --primary: #0d9488;
+            --primary-light: #ccfbf1;
+            --primary-dark: #0f766e;
+            --bg-color: #f0fdfa;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --warning-bg: #fef3c7;
+            --warning-text: #d97706;
+            --danger: #ef4444;
+            --border-color: #e2e8f0;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* Header / Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .brand i.logo-icon {
+            color: var(--primary);
+            font-size: 1.4rem;
+        }
+
+        .role-badge {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-greeting {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .btn-sair {
+            background-color: transparent;
+            color: var(--text-sub);
+            border: 1px solid var(--border-color);
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            
+        }
+
+        .btn-sair:hover {
+            background-color: #EAEFEA;
+            color: var(--text-main);
+        }
+
+       .btn-logout:hover,
+         .btn-sair:hover {
+          background-color: var(--danger);
+          color: var(--white);
+        }
+
+
+        /* Container Principal */
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Card de Boas-Vindas */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(115, 186, 155, 0.25);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .welcome-card h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .welcome-card p {
+            margin: 0;
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        .btn-novo-diag {
+            background-color: white;
+            color: var(--primary-dark);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-novo-diag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+        }
+
+        /* Grid Estatístico */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .icon-green { background-color: var(--primary-light); color: var(--primary-dark); }
+        .icon-blue { background-color: #EBF3FA; color: #3B82F6; }
+        .icon-orange { background-color: var(--warning-bg); color: #D97706; }
+
+        .stat-info h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .stat-info p {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin: 0;
+        }
+
+        /* Tabela de Pacientes */
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 12px 16px;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-color);
+        }
+
+        .btn-acao {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-acao:hover {
+            background-color: #D3EBDD;
+        }
+
+        @media (max-width: 768px) {
+            .welcome-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
