@@ -82,12 +82,20 @@
             cursor: pointer;
             font-weight: 600;
             transition: all 0.2s;
+            
         }
 
         .btn-sair:hover {
             background-color: #EAEFEA;
             color: var(--text-main);
         }
+
+       .btn-logout:hover,
+         .btn-sair:hover {
+          background-color: var(--danger);
+          color: var(--white);
+        }
+
 
         /* Container Principal */
         .container {
