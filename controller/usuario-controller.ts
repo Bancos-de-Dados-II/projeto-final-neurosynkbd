@@ -1,31 +1,32 @@
+import mongoose from 'mongoose';
 import type { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 import bcrypt from 'bcryptjs';
 
 export const buscarPacientePorId = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    
-    // 1. Busca o paciente
+    const id = req.params.id as string; 
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ mensagem: 'ID fornecido é inválido.' });
+    }
+
     const paciente = await UsuarioMongo.findById(id).select('-senha');
 
     if (!paciente) {
       return res.status(404).json({ mensagem: 'Paciente não encontrado.' });
     }
 
-    // 2. Busca no banco qual Cuidador tem o ID deste paciente no array pacientesVinculados
     const cuidador = await UsuarioMongo.findOne({
-      pacientesVinculados: id
+      pacientesVinculados: id as any
     }).select('nome email');
 
-    // 3. Retorna os dados do paciente + os dados do cuidador encontrado
-    res.status(200).json({
+    return res.status(200).json({
       ...paciente.toObject(),
       cuidador: cuidador ? { nome: cuidador.nome, email: cuidador.email } : null
     });
   } catch (error) {
     console.error('Erro ao buscar paciente:', error);
-    res.status(500).json({ mensagem: 'Erro interno no servidor.' });
+    return res.status(500).json({ mensagem: 'Erro interno no servidor.' });
   }
 };
 
@@ -163,11 +164,12 @@ export async function loginUsuario(req: Request, res: Response): Promise<Respons
         if (!email || !senha) {
             return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
         }
+        
         const usuario = await UsuarioMongo.findOne({ email });
-        if (!usuario) {
+        if (!usuario || !usuario.senha) {
             return res.status(401).json({ error: "E-mail ou senha incorretos." });
         }
-        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+        const senhaValida = await bcrypt.compare(senha, usuario.senha!);
         if (!senhaValida) {
             return res.status(401).json({ error: "E-mail ou senha incorretos." });
         }
@@ -175,17 +177,15 @@ export async function loginUsuario(req: Request, res: Response): Promise<Respons
         const resposta: any = usuario.toObject();
         delete resposta.senha;
 
-        // Padronização de chaves mantendo a formatação original do Mongoose ('Paciente', 'Cuidador', 'Terapeuta')
-const role = resposta.tipo_usuario || resposta.tipo || '';
+        const role = resposta.tipo_usuario || resposta.tipo || '';
 
-return res.status(200).json({
-    message: "Login realizado com sucesso!",
-    usuario: resposta,
-    userRole: role,
-    tipo_usuario: role,
-    userName: resposta.nome
-});
-       
+        return res.status(200).json({
+            message: "Login realizado com sucesso!",
+            usuario: resposta,
+            userRole: role,
+            tipo_usuario: role,
+            userName: resposta.nome
+        });
 
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
