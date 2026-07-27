@@ -22,7 +22,7 @@ class Paciente extends Model<PacienteAttributes, PacienteCreationAttributes> imp
 
 Paciente.init({
     usuarioId: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(24),
         primaryKey: true,
     },
     tipo_neurodivergencia: {

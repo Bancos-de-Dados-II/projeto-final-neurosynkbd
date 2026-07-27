@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 
+
 export async function atualizarGeolocalizacao(req: Request, res: Response): Promise<Response | void> {
     try {
         const { usuarioId, latitude, longitude } = req.body;

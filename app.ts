@@ -13,7 +13,8 @@ import CuidadorRouter from './router/cuidador-router.js';
 import PacienteRouter from './router/paciente-router.js';
 import TerapeutaRouter from './router/terapeuta-router.js';
 import BotaoToTravadoRouter from './router/botaoToTravado-router.js';
-import LocalizacaoRouter from './router/localizacao-router.js';
+import LocalizacaoRouter from './router/usuario-router.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,12 @@ const port: number = 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/usuarios', UsuarioRouter);
+app.use('/usuarios', UsuarioRouter);
+app.use('/cuidadores', CuidadorRouter);
+app.use('/pacientes', PacienteRouter);
+app.use('/terapeutas', TerapeutaRouter);
+app.use('/botao-travado', BotaoToTravadoRouter);
+app.use('/localizacao', LocalizacaoRouter);
 async function inicializarServidor() {
   try {
     await conectarMongo();

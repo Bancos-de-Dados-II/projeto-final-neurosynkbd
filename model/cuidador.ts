@@ -17,7 +17,7 @@ class Cuidador extends Model<CuidadorAttributes, CuidadorCreationAttributes> imp
 Cuidador.init(
     {
         usuarioId: {
-            type: DataTypes.UUID,
+            type: DataTypes.STRING(24),
             primaryKey: true,
             allowNull: false,
             references: {
