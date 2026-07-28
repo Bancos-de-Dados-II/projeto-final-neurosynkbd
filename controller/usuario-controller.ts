@@ -164,10 +164,14 @@ export async function loginUsuario(req: Request, res: Response): Promise<Respons
             return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
         }
         const usuario = await UsuarioMongo.findOne({ email });
+        console.log("=== DIAGNÓSTICO DE LOGIN ===");
+    console.log("E-mail recebido:", email);
+    console.log("Usuário retornado do MongoDB:", usuario);
         if (!usuario) {
             return res.status(401).json({ error: "E-mail ou senha incorretos." });
         }
         const senhaValida = await bcrypt.compare(senha, usuario.senha);
+        console.log("A senha é válida (bcrypt)?", senhaValida);
         if (!senhaValida) {
             return res.status(401).json({ error: "E-mail ou senha incorretos." });
         }
@@ -219,5 +223,24 @@ export const vincularPaciente = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("--> Erro no catch:", error);
     return res.status(500).json({ mensagem: 'Erro ao vincular paciente.', erro: error.message });
+  }
+};
+export const checarSosAtivo = async (req: any, res: any) => {
+  try {
+    // Busca no MongoDB o usuário/paciente com o alerta de SOS ativo
+    const usuarioSos = await UsuarioMongo.findOne({ 'sos.ativo': true });
+
+    if (!usuarioSos) {
+      return res.status(200).json({ ativo: false });
+    }
+
+    return res.status(200).json({
+      ativo: true,
+      usuarioId: usuarioSos._id,
+      localizacao: usuarioSos.localizacao
+    });
+  } catch (error) {
+    console.error("Erro ao checar status do SOS:", error);
+    return res.status(500).json({ mensagem: "Erro interno no servidor." });
   }
 };

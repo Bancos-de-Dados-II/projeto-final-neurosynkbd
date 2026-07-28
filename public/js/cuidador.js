@@ -199,8 +199,11 @@ function checarStatusSOS() {
     if (sosData.ativo) {
       if (cardAlerta) cardAlerta.style.display = 'block';
 
-      const lat = sosData.lat || -23.55052;
-      const lng = sosData.lng || -46.633308;
+      // Se sosData tiver o array do MongoDB, pega na ordem correta [1]=lat, [0]=lng
+const coords = sosData.localizacao?.coordinates || sosData.coordinates;
+
+const lat = coords ? coords[1] : (sosData.lat || -23.55052);
+const lng = coords ? coords[0] : (sosData.lng || -46.633308);
 
       setTimeout(() => {
         inicializarMapa(lat, lng);

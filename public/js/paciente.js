@@ -101,51 +101,74 @@ let sosInterval = null;
 let sosSegundos = 0;
 
 window.acionarSOS = function() {
-  const banner = document.getElementById('sos-alert-banner');
-  const timer = document.getElementById('sos-timer');
-  
-  if (banner) banner.style.display = 'block';
+    const usuarioId = localStorage.getItem('userId') || localStorage.getItem('usuarioId');
+    const banner = document.getElementById('sos-alert-banner');
+    const timer = document.getElementById('sos-timer');
 
-  if (!sosInterval) {
-    sosSegundos = 0;
-    sosInterval = setInterval(() => {
-      sosSegundos++;
-      if (timer) timer.innerText = `Tempo ativo: ${sosSegundos}s`;
-    }, 1000);
-  }
+    if (banner) banner.style.display = 'block';
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        
-        console.log('📍 SOS Geolocalização enviada:', lat, lng);
+    if (!sosInterval) {
+        sosSegundos = 0;
+        sosInterval = setInterval(() => {
+            sosSegundos++;
+            if (timer) timer.innerText = `Tempo ativo: ${sosSegundos}s`;
+        }, 1000);
+    }
 
-        // Salva as coordenadas para o Cuidador conseguir ler
+    const registrarSOS = (latitude, longitude) => {
         const sosData = {
-          ativo: true,
-          lat: lat,
-          lng: lng,
-          dataHora: new Date().toLocaleTimeString('pt-BR')
+            ativo: true,
+            lat: latitude,
+            lng: longitude,
+            dataHora: new Date().toLocaleTimeString('pt-BR')
         };
         localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
-      },
-      (error) => {
-        console.warn('⚠️ Erro ao obter geolocalização:', error.message);
-        
-        // Coordenadas de contingência (fallback) caso dê erro
-        const sosData = {
-          ativo: true,
-          lat: -23.55052,
-          lng: -46.633308,
-          dataHora: new Date().toLocaleTimeString('pt-BR')
-        };
-        localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
-      }
-    );
-  }
+
+        if (!usuarioId) {
+            console.error("❌ usuarioId não encontrado no localStorage.");
+            return;
+        }
+
+        fetch('/localizacao', {
+    method: 'PUT',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        usuarioId: usuarioId,
+        latitude: latitude,
+        longitude: longitude
+    })
+})
+        .then(async (res) => {
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            return res.json();
+        })
+        .then((dados) => console.log("🚨 SOS e localização registrados:", dados))
+        .catch((err) => console.error("❌ Erro na requisição SOS:", err.message));
+    };
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => registrarSOS(position.coords.latitude, position.coords.longitude),
+            (error) => {
+                console.warn("⚠️ Sem GPS, usando fallback:", error.message);
+                registrarSOS(-23.55052, -46.633308);
+            }
+        );
+    } else {
+        registrarSOS(-23.55052, -46.633308);
+    }
 };
+    // Coordenadas de contingência (fallback) para o localStorage
+    const sosData = {
+        ativo: true,
+        lat: -23.55052,
+        lng: -46.633308,
+        dataHora: new Date().toLocaleTimeString('pt-BR')
+    };
+    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+
 function carregarFotosSalvas() {
     // Busca todos os elementos que possuem o atributo data-tarefa-id
     const tarefas = document.querySelectorAll('[data-tarefa-id]');
