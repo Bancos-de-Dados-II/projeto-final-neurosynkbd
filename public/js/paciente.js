@@ -197,13 +197,34 @@ async function carregarCuidadorDoBanco() {
 }
 
 function dispararSOS() {
+    const pacienteId = localStorage.getItem('paciente_id') || localStorage.getItem('usuarioId');
+
+    if (!pacienteId) {
+        alert('⚠️ Usuário não identificado. Faça login novamente.');
+        return;
+    }
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-            (pos) => enviarSOSParaBanco(pos.coords.latitude, pos.coords.longitude),
-            () => enviarSOSParaBanco(-23.55052, -46.633308) 
+            (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                const localizacaoGeoJSON = {
+                    type: "Point",
+                    coordinates: [longitude, latitude]};
+                enviarAlertaSOS(pacienteId, localizacaoGeoJSON);
+            },
+            (error) => {
+                console.warn('⚠️ Erro ao obter GPS, usando coordenadas fallback:', error.message);
+                const fallbackGeoJSON = {
+                    type: "Point",
+                    coordinates: [-46.633308, -23.55052] 
+                };
+
+                enviarAlertaSOS(pacienteId, fallbackGeoJSON);
+            }
         );
     } else {
-        enviarSOSParaBanco(-23.55052, -46.633308);
+        alert('Geolocalização não é suportada neste navegador.');
     }
 }
 
@@ -235,30 +256,32 @@ function escapeHTML(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-async function enviarAlertaSOS(pacienteId, lat, lng) {
-    const sosData = {
-        ativo: true,
-        pacienteId: pacienteId,
-        lat: lat,
-        lng: lng,
-        dataHora: new Date().toISOString()
-    };
-    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+async function enviarAlertaSOS(pacienteId, localizacaoGeoJSON) {
+    const toast = document.getElementById('sos-toast');
+    if (toast) {
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
     try {
-        await fetch('/api/sos', {
+        const response = await fetch('/api/sos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(sosData)
+            body: JSON.stringify({
+                pacienteId: pacienteId,
+                localizacao: localizacaoGeoJSON, 
+                dataHora: new Date().toISOString()
+            })
         });
-        console.log('🚨 Alerta SOS enviado com sucesso para o servidor!');
+        if (response.ok) {
+            console.log('🚨 Alerta SOS em GeoJSON enviado com sucesso!');
+        } else {
+            console.error('Erro ao registrar SOS no servidor.');
+        }
     } catch (err) {
-        console.error('Erro ao enviar alerta SOS para o backend:', err);
+        console.error('❌ Erro de rede ao enviar SOS:', err);
     }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  carregarFotosSalvas();
-  carregarDadosPaciente();
-});
 
 async function carregarDadosPaciente() {
   try {

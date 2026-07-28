@@ -1,7 +1,3 @@
-import dns from 'node:dns';
-dns.setDefaultResultOrder('ipv4first');
-dns.setServers(['8.8.8.8', '1.1.1.1']);
-
 import express, { type Application } from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -15,7 +11,7 @@ import CuidadorRouter from './router/cuidador-router.js';
 import PacienteRouter from './router/paciente-router.js';
 import TerapeutaRouter from './router/terapeuta-router.js';
 import BotaoToTravadoRouter from './router/botaoToTravado-router.js';
-import LocalizacaoRouter from './router/localizacao-router.js'; // Corrigido a importação do router correto
+import LocalizacaoRouter from './router/localizacao-router.js';
 import apiRouter from './router/api-router.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,25 +35,30 @@ app.use('/botao-travado', BotaoToTravadoRouter);
 app.use('/localizacao', LocalizacaoRouter);
 app.use('/api', apiRouter);
 
-async function inicializarServidor() {
+async function conectarBancos() {
+  try {
+    await connectPostgres();
+    console.log('🐘 PostgreSQL conectado com sucesso!');
+  } catch (err) {
+    console.error('⚠️ Erro ao conectar no PostgreSQL:', err);
+  }
+
   try {
     await conectarMongo();
-    await connectPostgres();
-    app.listen(port, () => {
-      console.log(`🍃 Servidor focado no MongoDB e PostgreSQL pronto!`);
-      console.log(`🚀 NeuroSync rodando em: http://localhost:${port}`);
-    });
-  } catch (error) {
-    console.error("❌ Falha Crítica na inicialização:", error);
-    process.exit(1);
+    console.log('🍃 MongoDB conectado com sucesso!');
+  } catch (err) {
+    console.error('⚠️ Erro ao conectar no MongoDB:', err);
   }
-  sequelize.sync({ alter: true })
-  .then(() => {
+
+  try {
+    await sequelize.sync({ alter: true });
     console.log('✅ Tabelas do PostgreSQL sincronizadas com sucesso!');
-  })
-  .catch((err) => {
-    console.error('❌ Erro ao sincronizar tabelas:', err);
-  });
+  } catch (err) {
+    console.error('❌ Erro na sincronização das tabelas:', err);
+  }
 }
 
-inicializarServidor();
+app.listen(port, () => {
+  console.log(`🚀 NeuroSync rodando na porta ${port}: http://localhost:${port}`);
+  conectarBancos();
+});

@@ -16,7 +16,7 @@ class Paciente extends Model<PacienteAttributes, PacienteCreationAttributes> imp
 
     public static associate(models: any) {
         if (models.BotaoSos) {
-            Paciente.hasMany(models.BotaoSos, { foreignKey: 'pacienteId', as: 'alertasSos' });
+            Paciente.hasMany(models.BotaoSos, { foreignKey: 'pacienteId', as: 'alertasSos', constraints: false });
         }
     }
 }

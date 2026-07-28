@@ -82,6 +82,7 @@
     <button class="sos-btn" onclick="dispararSOS()">SOS!</button>
 
     <script>
+    // 1. Logout
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -89,8 +90,32 @@
             window.location.href = '../index.html';
         });
     }
+
+    // 2. Carregar Informações do Cuidador no Card Superior
+    async function carregarInfoCuidador(pacienteId) {
+        const elCuidador = document.getElementById('info-cuidador');
+        if (!elCuidador) return;
+
+        try {
+            const res = await fetch(`/api/pacientes/perfil/${pacienteId}`);
+            if (res.ok) {
+                const dados = await res.json();
+                if (dados.cuidador) {
+                    elCuidador.innerHTML = `
+                        <p style="margin: 0; color: #334155;"><strong>Nome:</strong> ${dados.cuidador.nome}</p>
+                        <p style="margin: 0; color: #64748b;"><strong>Email:</strong> ${dados.cuidador.email}</p>
+                    `;
+                } else {
+                    elCuidador.innerHTML = `<p style="color: #64748b;">Sem cuidador vinculado no momento.</p>`;
+                }
+            }
+        } catch (err) {
+            console.error("Erro ao buscar cuidador:", err);
+            elCuidador.innerHTML = `<p style="color: #ef4444;">Erro ao carregar dados do cuidador.</p>`;
+        }
+    }
+
     async function carregarRotinasDoBanco() {
-        // Recupera o ID do paciente logado
         const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
         const container = document.getElementById('tasks-container');
 
@@ -101,6 +126,7 @@
             }
             return;
         }
+        carregarInfoCuidador(pacienteId);
 
         try {
             const response = await fetch(`/api/pacientes/${pacienteId}/rotinas`);
@@ -111,12 +137,17 @@
                 renderizarRotinasReais(tarefas);
             } else {
                 console.error('Erro na resposta da API de rotinas:', response.status);
+                if (container) {
+                    container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">Nenhuma tarefa cadastrada para você ainda.</p>';
+                }
             }
         } catch (error) {
             console.error("❌ Erro ao carregar rotinas do banco:", error);
+            if (container) {
+                container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">Erro ao conectar com o servidor.</p>';
+            }
         }
     }
-
     function renderizarRotinasReais(tarefas) {
         const container = document.getElementById('tasks-container');
         if (!container) return;
@@ -131,16 +162,16 @@
         tarefas.forEach(tarefa => {
             const card = document.createElement('div');
             card.className = 'task-card';
-            const titulo = tarefa.tituloTarefa || tarefa.descriçaoTarefa || 'Tarefa sem título';
+            const titulo = tarefa.tituloTarefa || tarefa.descriçaoTarefa || 'Tarefa da Rotina';
             const imagem = tarefa.imagem_Url || '../img/default-task.jpg';
 
             card.innerHTML = `
-                <img src="${imagem}" alt="${titulo}" class="task-img" style="max-height: 200px; object-fit: cover; border-radius: 8px;">
-                <div class="task-content" style="padding: 10px 0;">
-                    <div class="task-title" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 10px;">${titulo}</div>
+                <img src="${imagem}" alt="${titulo}" class="task-img" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px;">
+                <div class="task-content" style="padding: 12px 0;">
+                    <div class="task-title" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 12px; color: #1e293b;">${titulo}</div>
                     <div class="task-actions" style="display: flex; gap: 10px;">
-                        <button class="btn-marcar" onclick="marcarFeito(this)" style="padding: 8px 16px; cursor: pointer;">✓ Concluir</button>
-                        <button class="btn-to-travado" onclick="abrirToTravado('${titulo}')" style="padding: 8px 16px; cursor: pointer;">Tô Travado</button>
+                        <button class="btn-marcar" onclick="marcarFeito(this)" style="padding: 8px 16px; cursor: pointer; border-radius: 6px; border: none; background: #0284c7; color: #fff;">✓ Concluir</button>
+                        <button class="btn-to-travado" onclick="abrirToTravado('${titulo}')" style="padding: 8px 16px; cursor: pointer; border-radius: 6px; border: none; background: #e11d48; color: #fff;">Tô Travado</button>
                     </div>
                 </div>
             `;
@@ -157,23 +188,65 @@
     }
 
     function abrirToTravado(titulo) {
-        document.getElementById('modal-task-name').innerText = titulo;
-        document.getElementById('modal-travado').style.display = 'flex';
+        const elNome = document.getElementById('modal-task-name');
+        const modal = document.getElementById('modal-travado');
+        if (elNome) elNome.innerText = titulo;
+        if (modal) modal.style.display = 'flex';
     }
 
     function fecharModal() {
-        document.getElementById('modal-travado').style.display = 'none';
+        const modal = document.getElementById('modal-travado');
+        if (modal) modal.style.display = 'none';
     }
 
+    // 7. Disparar SOS com GeoJSON (Exigência do Projeto)
     function dispararSOS() {
+        const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
         const toast = document.getElementById('sos-toast');
+
         if (toast) {
             toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const localizacaoGeoJSON = {
+                        type: "Point",
+                        coordinates: [position.coords.longitude, position.coords.latitude] // Longitude ANTES no GeoJSON
+                    };
+                    enviarAlertaSOS(pacienteId, localizacaoGeoJSON);
+                },
+                (error) => {
+                    console.warn('⚠️ Usando geolocalização fallback:', error.message);
+                    const fallbackGeoJSON = {
+                        type: "Point",
+                        coordinates: [-46.633308, -23.55052]
+                    };
+                    enviarAlertaSOS(pacienteId, fallbackGeoJSON);
+                }
+            );
         }
     }
+
+    async function enviarAlertaSOS(pacienteId, localizacaoGeoJSON) {
+        try {
+            await fetch('/api/sos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pacienteId: pacienteId,
+                    localizacao: localizacaoGeoJSON,
+                    dataHora: new Date().toISOString()
+                })
+            });
+            console.log('🚨 SOS enviado com GeoJSON com sucesso!');
+        } catch (err) {
+            console.error('❌ Erro de rede ao enviar SOS:', err);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', carregarRotinasDoBanco);
 </script>
 </body>

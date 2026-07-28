@@ -53,7 +53,7 @@ BotaoSos.init({
         defaultValue: false
     },
     pacienteId: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(24),
         allowNull: true
     }
 }, {

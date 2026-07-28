@@ -3,15 +3,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.POSTGRES_URI || '', {
+const postgresUri = process.env.POSTGRES_URI || '';
+
+const sequelize = new Sequelize(postgresUri, {
   dialect: 'postgres',
+  logging: false,
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false,
+      rejectUnauthorized: false
     },
-  },
-  logging: false,
+    family: 4 
+  }
 });
 
 async function conectarBanco(): Promise<void> {
