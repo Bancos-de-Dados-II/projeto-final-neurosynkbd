@@ -281,11 +281,15 @@ async function salvarRotinaNoBanco(event) {
     const medicacao = document.getElementById('rotina-medicacao').value.trim();
     const fileInput = document.getElementById('rotina-foto');
 
-    const formData = new FormData();
-    formData.append('paciente_id', pacienteId);
-    formData.append('titulo', titulo);
-    formData.append('proxima_medicacao', medicacao);
+    if (!pacienteId) {
+        alert('❌ ID do paciente inválido.');
+        return;
+    }
 
+    const formData = new FormData();
+    formData.append('titulo', titulo);
+    formData.append('descricao', titulo); 
+    formData.append('proxima_medicacao', medicacao);
     if (fileInput.files.length > 0) {
         formData.append('foto', fileInput.files[0]);
     }
@@ -293,19 +297,23 @@ async function salvarRotinaNoBanco(event) {
     try {
         const response = await fetch(`/api/pacientes/${pacienteId}/rotina`, {
             method: 'POST',
-            body: formData        });
+            body: formData
+        });
+
+        const dados = await response.json();
 
         if (response.ok) {
-            alert('✅ Rotina, foto e próxima medicação atualizadas no banco de dados!');
+            alert('✅ Rotina e medicação cadastradas com sucesso!');
             fecharModalRotina();
-            carregarPacientes(); 
+            if (typeof carregarPacientes === 'function') {
+                carregarPacientes();
+            }
         } else {
-            const err = await response.json();
-            alert('❌ Erro ao salvar rotina: ' + (err.mensagem || 'Verifique as informações.'));
+            alert('❌ Erro: ' + (dados.mensagem || dados.error || 'Verifique as informações.'));
         }
     } catch (err) {
-        console.error('Erro ao conectar ao servidor:', err);
-        alert('Erro ao se comunicar com o banco de dados.');
+        console.error('Erro de conexão:', err);
+        alert('❌ Erro de conexão ao salvar rotina.');
     }
 }
 async function checarStatusSOSDoBanco() {

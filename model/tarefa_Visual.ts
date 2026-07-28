@@ -46,16 +46,17 @@ TarefaVisual.init({
     defaultValue: false
   },
   idPaciente: {
-    type: DataTypes.UUID,
+    type: DataTypes.STRING(24),
     allowNull: true
   },
   idCuidador: {
-    type: DataTypes.UUID,
+    type: DataTypes.STRING(24),
     allowNull: true
   }
 }, {
   sequelize,
-  tableName: 'tarefa_visual',
+  tableName: 'tarefa_Visual',  
+    freezeTableName: true,
   timestamps: false
 });
 

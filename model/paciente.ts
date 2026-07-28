@@ -15,8 +15,9 @@ class Paciente extends Model<PacienteAttributes, PacienteCreationAttributes> imp
     public cuidado_especial?: string;
 
     public static associate(models: any) {
-        Paciente.belongsTo(models.Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
-        Paciente.hasMany(models.BotaoSos, { foreignKey: 'pacienteId', as: 'alertasSos' });
+        if (models.BotaoSos) {
+            Paciente.hasMany(models.BotaoSos, { foreignKey: 'pacienteId', as: 'alertasSos' });
+        }
     }
 }
 

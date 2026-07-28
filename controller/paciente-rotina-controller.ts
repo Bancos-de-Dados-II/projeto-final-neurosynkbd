@@ -3,6 +3,7 @@ import { UsuarioMongo } from '../model/usuarioMongo.js';
 import TarefaVisual from '../model/tarefa_Visual.js';
 import BotaoSos from '../model/BotaoSos.js';
 
+
 // Helper para sanitizar os parâmetros de rota
 function extrairIdDoParams(id: string | string[] | undefined): string | undefined {
     if (!id) return undefined;
@@ -125,5 +126,24 @@ export async function buscarSosAtivo(req: Request, res: Response) {
     } catch (error: any) {
         console.error("Erro ao buscar SOS ativo:", error);
         return res.status(500).json({ error: "Erro ao buscar SOS ativo: " + error.message });
+    }
+}
+
+export async function buscarRotinasDoPaciente(req: Request, res: Response) {
+    try {
+        const pacienteId = extrairIdDoParams(req.params.pacienteId);
+
+        if (!pacienteId) {
+            return res.status(400).json({ mensagem: 'ID do paciente é obrigatório.' });
+        }
+
+        const tarefas = await TarefaVisual.findAll({
+            where: { idPaciente: pacienteId }
+        });
+
+        return res.status(200).json(tarefas);
+    } catch (error: any) {
+        console.error("Erro ao buscar rotinas:", error);
+        return res.status(500).json({ error: "Erro interno ao buscar rotinas: " + error.message });
     }
 }

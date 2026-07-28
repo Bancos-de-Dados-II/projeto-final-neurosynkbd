@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -81,147 +82,99 @@
     <button class="sos-btn" onclick="dispararSOS()">SOS!</button>
 
     <script>
-        async function carregarRotinasDoBanco() {
-  const pacienteId = localStorage.getItem('paciente_id') || localStorage.getItem('usuarioId');
-  if (!pacienteId) return;
-
-  try {
-    const response = await fetch(`/api/pacientes/perfil/${pacienteId}`);
-    if (response.ok) {
-      const dados = await response.json();
-      console.log('Rotina vinda do Banco:', dados);
-      
-      if (dados.rotinas && dados.rotinas.length > 0) {
-         renderizarRotinasReais(dados.rotinas);
-      }
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '../index.html';
+        });
     }
-  } catch (error) {
-    console.error("Erro ao carregar rotina do banco:", error);
-  }
-}
+    async function carregarRotinasDoBanco() {
+        // Recupera o ID do paciente logado
+        const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
+        const container = document.getElementById('tasks-container');
 
-document.addEventListener('DOMContentLoaded', carregarRotinasDoBanco);
-        
-        const btnLogout = document.getElementById('btn-logout');
-            if (btnLogout) {
-                btnLogout.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.href = '../index.html';
-                });
+        if (!pacienteId) {
+            console.warn('⚠️ ID do paciente não encontrado no localStorage.');
+            if (container) {
+                container.innerHTML = '<p style="text-align:center; color:#64748b;">Nenhum paciente identificado. Faça login novamente.</p>';
             }
-
-
-        let tarefaAtiva = null;
-        let passoAtualIndex = 0;
-
-        // Renderizar lista de tarefas na tela
-        function renderizarTarefas() {
-            const container = document.getElementById('tasks-container');
-            container.innerHTML = '';
-
-            tarefas.forEach(tarefa => {
-                const card = document.createElement('div');
-                card.className = 'task-card';
-
-                const htmlAcoes = tarefa.concluida ? `
-                    <button class="btn-marcar feito">✓ Feito</button>
-                ` : `
-                    <button class="btn-marcar" onclick="marcarFeito(${tarefa.id})">✓ Marcar</button>
-                    <button class="btn-to-travado" onclick="abrirToTravado(${tarefa.id})">Tô Travado</button>
-                `;
-
-                card.innerHTML = `
-                    <img src="${tarefa.imagem}" alt="${tarefa.titulo}" class="task-img">
-                    <div class="task-content">
-                        <div class="task-title">${tarefa.titulo}</div>
-                        <div class="task-actions">${htmlAcoes}</div>
-                    </div>
-                `;
-
-                container.appendChild(card);
-            });
+            return;
         }
 
-        function marcarFeito(id) {
-            const t = tarefas.find(item => item.id === id);
-            if (t) {
-                t.concluida = true;
-                renderizarTarefas();
-            }
-        }
+        try {
+            const response = await fetch(`/api/pacientes/${pacienteId}/rotinas`);
 
-        // Modal Tô Travado
-        function abrirToTravado(id) {
-            tarefaAtiva = tarefas.find(item => item.id === id);
-            if (!tarefaAtiva || !tarefaAtiva.passos.length) return;
-
-            passoAtualIndex = 0;
-            document.getElementById('modal-task-name').innerText = tarefaAtiva.titulo;
-            document.getElementById('modal-travado').style.display = 'flex';
-            atualizarModalPasso();
-        }
-
-        function fecharModal() {
-            document.getElementById('modal-travado').style.display = 'none';
-        }
-
-        function atualizarModalPasso() {
-            const total = tarefaAtiva.passos.length;
-            const passo = tarefaAtiva.passos[passoAtualIndex];
-            const porcentagem = Math.round(((passoAtualIndex + 1) / total) * 100);
-
-            document.getElementById('progress-step-text').innerText = `Passo ${passoAtualIndex + 1} de ${total}`;
-            document.getElementById('progress-percent-text').innerText = `${porcentagem}%`;
-            document.getElementById('progress-fill').style.width = `${porcentagem}%`;
-
-            document.getElementById('modal-step-img').src = passo.img;
-            document.getElementById('modal-step-title').innerText = passo.texto;
-
-            const listaUl = document.getElementById('modal-steps-list');
-            listaUl.innerHTML = '';
-
-            tarefaAtiva.passos.forEach((p, idx) => {
-                const li = document.createElement('li');
-                let statusClass = '';
-                let iconContent = idx + 1;
-
-                if (idx < passoAtualIndex) {
-                    statusClass = 'completed';
-                    iconContent = '✓';
-                } else if (idx === passoAtualIndex) {
-                    statusClass = 'active';
-                }
-
-                li.className = `step-item ${statusClass}`;
-                li.innerHTML = `
-                    <span class="step-number">${iconContent}</span>
-                    <span>${p.texto}</span>
-                `;
-                listaUl.appendChild(li);
-            });
-        }
-
-        function avancarPasso() {
-            if (passoAtualIndex < tarefaAtiva.passos.length - 1) {
-                passoAtualIndex++;
-                atualizarModalPasso();
+            if (response.ok) {
+                const tarefas = await response.json();
+                console.log('✅ Rotinas do banco de dados:', tarefas);
+                renderizarRotinasReais(tarefas);
             } else {
-                fecharModal();
-                marcarFeito(tarefaAtiva.id);
+                console.error('Erro na resposta da API de rotinas:', response.status);
             }
+        } catch (error) {
+            console.error("❌ Erro ao carregar rotinas do banco:", error);
+        }
+    }
+
+    function renderizarRotinasReais(tarefas) {
+        const container = document.getElementById('tasks-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (!tarefas || tarefas.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">Nenhuma tarefa cadastrada para você ainda.</p>';
+            return;
         }
 
-        // Notificação do SOS
-        function dispararSOS() {
-            const toast = document.getElementById('sos-toast');
+        tarefas.forEach(tarefa => {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            const titulo = tarefa.tituloTarefa || tarefa.descriçaoTarefa || 'Tarefa sem título';
+            const imagem = tarefa.imagem_Url || '../img/default-task.jpg';
+
+            card.innerHTML = `
+                <img src="${imagem}" alt="${titulo}" class="task-img" style="max-height: 200px; object-fit: cover; border-radius: 8px;">
+                <div class="task-content" style="padding: 10px 0;">
+                    <div class="task-title" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 10px;">${titulo}</div>
+                    <div class="task-actions" style="display: flex; gap: 10px;">
+                        <button class="btn-marcar" onclick="marcarFeito(this)" style="padding: 8px 16px; cursor: pointer;">✓ Concluir</button>
+                        <button class="btn-to-travado" onclick="abrirToTravado('${titulo}')" style="padding: 8px 16px; cursor: pointer;">Tô Travado</button>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+    }
+
+    function marcarFeito(btn) {
+        btn.innerText = '✓ Concluído!';
+        btn.style.backgroundColor = '#16a34a';
+        btn.style.color = '#ffffff';
+        btn.disabled = true;
+    }
+
+    function abrirToTravado(titulo) {
+        document.getElementById('modal-task-name').innerText = titulo;
+        document.getElementById('modal-travado').style.display = 'flex';
+    }
+
+    function fecharModal() {
+        document.getElementById('modal-travado').style.display = 'none';
+    }
+
+    function dispararSOS() {
+        const toast = document.getElementById('sos-toast');
+        if (toast) {
             toast.style.display = 'block';
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 3000);
         }
-
-        // Inicialização
-        renderizarTarefas();
-    </script>
+    }
+    document.addEventListener('DOMContentLoaded', carregarRotinasDoBanco);
+</script>
 </body>
 </html>

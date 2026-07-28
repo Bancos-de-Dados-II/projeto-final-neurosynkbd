@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 
 import { conectarMongo } from './database/mongodb.js';
 import { connectPostgres } from './database/postgres.js';
-
+import sequelize from './database/sequelize.js';
 import UsuarioRouter from './router/usuario-router.js';
 import CuidadorRouter from './router/cuidador-router.js';
 import PacienteRouter from './router/paciente-router.js';
@@ -51,6 +51,13 @@ async function inicializarServidor() {
     console.error("❌ Falha Crítica na inicialização:", error);
     process.exit(1);
   }
+  sequelize.sync({ alter: true })
+  .then(() => {
+    console.log('✅ Tabelas do PostgreSQL sincronizadas com sucesso!');
+  })
+  .catch((err) => {
+    console.error('❌ Erro ao sincronizar tabelas:', err);
+  });
 }
 
 inicializarServidor();

@@ -4,7 +4,8 @@ import {
     salvarRotinaECarta, 
     buscarPerfilPacienteComCuidador,
     registrarSosBanco,
-    buscarSosAtivo
+    buscarSosAtivo,
+    buscarRotinasDoPaciente
 } from '../controller/paciente-rotina-controller.js';
 
 const apiRouter = Router();
@@ -12,5 +13,6 @@ apiRouter.post('/pacientes/:pacienteId/rotina', upload.single('foto'), salvarRot
 apiRouter.get('/pacientes/perfil/:id', buscarPerfilPacienteComCuidador);
 apiRouter.post('/sos', registrarSosBanco);
 apiRouter.get('/sos/ativo', buscarSosAtivo);
+apiRouter.get('/pacientes/:pacienteId/rotinas', buscarRotinasDoPaciente);
 
 export default apiRouter;

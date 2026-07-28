@@ -9,8 +9,8 @@ interface CuidadorCreationAttributes extends Optional<CuidadorAttributes, 'usuar
 
 class Cuidador extends Model<CuidadorAttributes, CuidadorCreationAttributes> implements CuidadorAttributes {
     public usuarioId!: string;
+    
     public static associate(models: any) {
-        Cuidador.belongsTo(models.Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
     }
 }
 
@@ -20,12 +20,6 @@ Cuidador.init(
             type: DataTypes.STRING(24),
             primaryKey: true,
             allowNull: false,
-            references: {
-                model: 'Usuarios',
-                key: 'id',
-            },
-            onDelete: 'CASCADE',
-            onUpdate: 'CASCADE'
         },
     },
     {
