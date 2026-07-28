@@ -75,30 +75,7 @@
         <!-- =========================================================
              US 4: UPLOAD DE FOTOS PARA PERSONALIZAÇÃO DA ROTINA
         ========================================================= -->
-        <section class="table-card" style="margin-bottom: 20px;">
-            <div class="table-header">
-                <h4><i class="fa-solid fa-camera"></i> Personalização de Tarefas (Upload de Fotos)</h4>
-            </div>
-            <div style="padding: 15px;">
-                <form id="form-upload-foto" onsubmit="fazerUploadFoto(event)" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <!-- Campo do Arquivo -->
-                    <div>
-                        <label for="input-foto-tarefa" class="sr-only">Selecione a Imagem</label>
-                        <input type="file" id="input-foto-tarefa" accept="image/*" required />
-                    </div>
-
-                    <!-- Campo do ID da Tarefa -->
-                    <div>
-                        <label for="input-tarefa-id" class="sr-only">ID da Tarefa</label>
-                        <input type="text" id="input-tarefa-id" placeholder="Ex: 101" value="101" required style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
-                    </div>
-
-                    <!-- Botão de Envio -->
-                    <button type="submit" class="btn-primary">Enviar e Vincular Foto</button>
-                </form>
-            </div>
-        </section>
-
+        
         <!-- US 5: PERMISSÕES & VÍNCULO TERAPÊUTICO -->
         <section class="table-card" style="margin-bottom: 20px;">
             <div class="table-header">
@@ -174,9 +151,60 @@
                 </table>
             </div>
         </section>
-
+    <div id="modal-detalhes-paciente" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: white; padding: 25px; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
+        <button onclick="fecharModalDetalhes()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        <h3 style="margin-top: 0; color: var(--primary-dark);"><i class="fa-solid fa-user-clock"></i> Detalhes do Paciente</h3>
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <div id="conteudo-detalhes-paciente">
+            <p>Carregando informações...</p>
+        </div>
+    </div>
+</div>
     </main>
 
     <script src="../js/cuidador.js" defer></script>
 </body>
+<!-- Modal Unificado: Registrar Rotina do Paciente -->
+<div id="modal-registrar-rotina" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1100;">
+    <div style="background: white; padding: 25px; border-radius: 16px; max-width: 550px; width: 90%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <button onclick="fecharModalRotina()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        
+        <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 1.3rem;">
+            <i class="fa-solid fa-calendar-plus"></i> Registrar Rotina do Paciente
+        </h3>
+        <p id="rotina-paciente-nome" style="color: var(--text-sub); margin-bottom: 15px; font-weight: 600;"></p>
+        <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <form id="form-registrar-rotina" onsubmit="salvarRotinaNoBanco(event)" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="rotina-paciente-id">
+
+            <!-- 1. Tarefa da Rotina -->
+            <div>
+                <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Descrição da Tarefa / Atividade</label>
+                <input type="text" id="rotina-titulo" placeholder="Ex: Tomar remédio das 14h / Fazer caminhada" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+            </div>
+
+            <!-- 2. Atualizar Status/Medicação na tabela do Paciente -->
+            <div>
+                <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Próxima Medicação</label>
+                <input type="text" id="rotina-medicacao" placeholder="Ex: Paracetamol 500mg - 14:00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+            </div>
+
+            <!-- 3. Upload da Imagem para a Tarefa -->
+            <div>
+                <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Anexar Foto da Tarefa / Remédio (Opcional)</label>
+                <input type="file" id="rotina-foto" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 8px;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" onclick="fecharModalRotina()" style="padding: 10px 18px; border: 1px solid #ccc; background: #f8fafc; border-radius: 8px; cursor: pointer;">Cancelar</button>
+                <button type="submit" class="btn-primary" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Salvar no Banco
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 </html>

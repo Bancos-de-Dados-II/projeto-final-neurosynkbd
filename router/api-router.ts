@@ -1,0 +1,16 @@
+import { Router } from 'express';
+import { upload } from '../config/multer.js';
+import { 
+    salvarRotinaECarta, 
+    buscarPerfilPacienteComCuidador,
+    registrarSosBanco,
+    buscarSosAtivo
+} from '../controller/paciente-rotina-controller.js';
+
+const apiRouter = Router();
+apiRouter.post('/pacientes/:pacienteId/rotina', upload.single('foto'), salvarRotinaECarta);
+apiRouter.get('/pacientes/perfil/:id', buscarPerfilPacienteComCuidador);
+apiRouter.post('/sos', registrarSosBanco);
+apiRouter.get('/sos/ativo', buscarSosAtivo);
+
+export default apiRouter;

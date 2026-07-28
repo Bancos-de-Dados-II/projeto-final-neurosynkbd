@@ -23,6 +23,14 @@
         </div>
     </header>
 
+    <div class="card" style="margin-bottom: 20px;">
+    <h3 style="color: var(--primary-dark); font-size: 1.1rem; margin-bottom: 10px;">
+        <i class="fa-solid fa-user-nurse"></i> Meu Cuidador Responsável
+    </h3>
+    <div id="info-cuidador">
+        <p style="color: var(--text-sub);">Carregando informações do cuidador do banco de dados...</p>
+    </div>
+</div>
     <!-- Conteúdo Principal -->
     <div class="main-container">
         <div class="header-title">
@@ -67,69 +75,33 @@
             </button>
         </div>
     </div>
-
-    <!-- Botão SOS e Notificação Toast -->
     <div class="sos-toast" id="sos-toast">
         SOS enviado! Seu cuidador foi notificado.
     </div>
     <button class="sos-btn" onclick="dispararSOS()">SOS!</button>
 
     <script>
-        // Dados das Tarefas (incluindo as duas novas tarefas do vídeo)
-        const tarefas = [
-            {
-                id: 1,
-                titulo: "Escovar os dentes",
-                imagem: "https://images.unsplash.com/photo-1559599101-f09722fb4948?auto=format&fit=crop&w=300&q=80",
-                concluida: true,
-                passos: []
-            },
-            {
-                id: 2,
-                titulo: "Tomar café da manhã",
-                imagem: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=300&q=80",
-                concluida: false,
-                passos: [
-                    { texto: "Sentar à mesa", img: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Comer devagar", img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Beber água ou leite", img: "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=600&q=80" }
-                ]
-            },
-            {
-                id: 3,
-                titulo: "Tomar banho",
-                imagem: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=300&q=80",
-                concluida: false,
-                passos: [
-                    { texto: "Entrar no box e ligar o chuveiro", img: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Passar sabonete no corpo", img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Se enxugar com a toalha", img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80" }
-                ]
-            },
-            {
-                id: 4,
-                titulo: "Se vestir",
-                imagem: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=300&q=80",
-                concluida: false,
-                passos: [
-                    { texto: "Escolher roupa do dia", img: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Vestir roupa de baixo", img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Vestir camisa e calça", img: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=600&q=80" }
-                ]
-            },
-            {
-                id: 5,
-                titulo: "Pegar a mochila",
-                imagem: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=300&q=80",
-                concluida: false,
-                passos: [
-                    { texto: "Verificar os pertences", img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Fechar o zíper", img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80" },
-                    { texto: "Colocar as alças nas costas", img: "https://images.unsplash.com/photo-1509762774605-f07235a08f1f?auto=format&fit=crop&w=600&q=80" }
-                ]
-            }
-        ];
+        async function carregarRotinasDoBanco() {
+  const pacienteId = localStorage.getItem('paciente_id') || localStorage.getItem('usuarioId');
+  if (!pacienteId) return;
 
+  try {
+    const response = await fetch(`/api/pacientes/perfil/${pacienteId}`);
+    if (response.ok) {
+      const dados = await response.json();
+      console.log('Rotina vinda do Banco:', dados);
+      
+      if (dados.rotinas && dados.rotinas.length > 0) {
+         renderizarRotinasReais(dados.rotinas);
+      }
+    }
+  } catch (error) {
+    console.error("Erro ao carregar rotina do banco:", error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', carregarRotinasDoBanco);
+        
         const btnLogout = document.getElementById('btn-logout');
             if (btnLogout) {
                 btnLogout.addEventListener('click', () => {

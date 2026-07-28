@@ -63,21 +63,22 @@ async function carregarPacientes() {
         }
 
         // Preenche a tabela com os dados reais
-        tabelaBody.innerHTML = pacientes.map(p => `
-            <tr>
-                <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.email || ''}</small></td>
-                <td><span class="status-badge active">Ativo</span></td>
-                <td>Sem medicação agendada</td>
-                <td>
-                    <button class="btn-icon" onclick="verDetalhes('${p._id || p.id}')" title="Ver Detalhes">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    <button class="btn-icon" onclick="registrarRotina('${p._id || p.id}')" title="Registrar Rotina">
-                        <i class="fa-solid fa-notes-medical"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        // Substitua o trecho dentro do .map da função carregarPacientes():
+tabelaBody.innerHTML = pacientes.map(p => `
+    <tr>
+        <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.email || ''}</small></td>
+        <td><span class="status-badge active">Ativo</span></td>
+        <td>${p.proxima_medicacao || 'Sem medicação agendada'}</td>
+        <td>
+            <button class="btn-icon" onclick="verDetalhes('${p._id || p.id}')" title="Ver Detalhes">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+            <button class="btn-icon" onclick="abrirModalRotina('${p._id || p.id}', '${p.nome}')" title="Registrar Rotina">
+                <i class="fa-solid fa-notes-medical"></i>
+            </button>
+        </td>
+    </tr>
+`).join('');
 
     } catch (error) {
         console.error('Erro:', error);
@@ -88,6 +89,40 @@ async function carregarPacientes() {
                 </td>
             </tr>`;
     }
+    async function enviarTarefaPaciente(event) {
+    event.preventDefault();
+
+    const pacienteId = document.getElementById('select-paciente-tarefa').value;
+    const titulo = document.getElementById('titulo-tarefa-input').value.trim();
+
+    if (!pacienteId || !titulo) {
+        alert('Selecione um paciente e informe o título da tarefa.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/tarefas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paciente_id: pacienteId,
+                titulo: titulo,
+                concluida: false
+            })
+        });
+
+        if (response.ok) {
+            alert('✅ Tarefa enviada ao paciente com sucesso!');
+            document.getElementById('form-criar-tarefa').reset();
+        } else {
+            const errData = await response.json();
+            alert('❌ Erro ao enviar tarefa: ' + (errData.mensagem || 'Tente novamente.'));
+        }
+    } catch (error) {
+        console.error('Erro ao enviar tarefa:', error);
+        alert('Erro ao se conectar ao servidor.');
+    }
+}
 }
 
 // ----------------------------------------------------
@@ -142,12 +177,39 @@ const resposta = await fetch('/usuarios/vincular-paciente', {
   }
 }
 
-function verDetalhes(idPaciente) {
-    alert(`Visualizando detalhes do paciente ID: ${idPaciente}`);
+async function verDetalhes(idPaciente) {
+    const modal = document.getElementById('modal-detalhes-paciente');
+    const conteudo = document.getElementById('conteudo-detalhes-paciente');
+    
+    if (modal) modal.style.display = 'flex';
+    
+    try {
+        const response = await fetch(`/usuarios/paciente/${idPaciente}`);
+        if (!response.ok) throw new Error('Não foi possível carregar os detalhes.');
+        
+        const paciente = await response.json();
+        
+        conteudo.innerHTML = `
+            <p><strong>Nome:</strong> ${paciente.nome || 'Não informado'}</p>
+            <p><strong>E-mail:</strong> ${paciente.email || 'Não informado'}</p>
+            <p><strong>Diagnóstico Base:</strong> ${paciente.diagnostico || 'Nenhum laudo registrado'}</p>
+            <p><strong>Status:</strong> Ativo</p>
+        `;
+    } catch (err) {
+        conteudo.innerHTML = `<p style="color: red;">Erro ao carregar detalhes: ${err.message}</p>`;
+    }
 }
 
-function registrarRotina(idPaciente) {
-    alert(`Abrindo formulário de rotina para o paciente ID: ${idPaciente}`);
+function fecharModalDetalhes() {
+    const modal = document.getElementById('modal-detalhes-paciente');
+    if (modal) modal.style.display = 'none';
+}
+function popularSelectPacientes(pacientes) {
+    const select = document.getElementById('select-paciente-tarefa');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecione o Paciente...</option>' + 
+        pacientes.map(p => `<option value="${p._id || p.id}">${p.nome || p.email}</option>`).join('');
 }
 
 // Configuração do Botão de Logout
@@ -160,6 +222,108 @@ function configurarLogout() {
         });
     }
 }
+// Renderização das linhas da tabela consultando a API
+function renderizarTabelaPacientes(pacientes) {
+    const tbody = document.getElementById('lista-meus-pacientes');
+    if (!tbody) return;
+
+    if (pacientes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Nenhum paciente vinculado.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = pacientes.map(p => {
+        const id = p._id || p.id;
+        const nome = p.nome || p.email;
+        const medicacao = p.proxima_medicacao || p.proximaMedicacao || 'Sem medicação agendada';
+
+        return `
+            <tr>
+                <td>
+                    <strong>${escapeHTML(nome)}</strong><br>
+                    <small style="color:#64748b">${escapeHTML(p.email || '')}</small>
+                </td>
+                <td><span class="badge-status">Ativo</span></td>
+                <td>${escapeHTML(medicacao)}</td>
+                <td>
+                    <button class="btn-acao" title="Ver Detalhes" onclick="verDetalhes('${id}')">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button class="btn-acao" title="Registrar Rotina" onclick="abrirModalRotina('${id}', '${escapeHTML(nome)}')">
+                        <i class="fa-solid fa-folder-plus"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Abrir Modal de Rotina
+function abrirModalRotina(idPaciente, nomePaciente) {
+    document.getElementById('rotina-paciente-id').value = idPaciente;
+    document.getElementById('rotina-paciente-nome').textContent = `Paciente: ${nomePaciente}`;
+    document.getElementById('form-registrar-rotina').reset();
+
+    const modal = document.getElementById('modal-registrar-rotina');
+    if (modal) modal.style.display = 'flex';
+}
+
+function fecharModalRotina() {
+    const modal = document.getElementById('modal-registrar-rotina');
+    if (modal) modal.style.display = 'none';
+}
+
+async function salvarRotinaNoBanco(event) {
+    event.preventDefault();
+
+    const pacienteId = document.getElementById('rotina-paciente-id').value;
+    const titulo = document.getElementById('rotina-titulo').value.trim();
+    const medicacao = document.getElementById('rotina-medicacao').value.trim();
+    const fileInput = document.getElementById('rotina-foto');
+
+    const formData = new FormData();
+    formData.append('paciente_id', pacienteId);
+    formData.append('titulo', titulo);
+    formData.append('proxima_medicacao', medicacao);
+
+    if (fileInput.files.length > 0) {
+        formData.append('foto', fileInput.files[0]);
+    }
+
+    try {
+        const response = await fetch(`/api/pacientes/${pacienteId}/rotina`, {
+            method: 'POST',
+            body: formData        });
+
+        if (response.ok) {
+            alert('✅ Rotina, foto e próxima medicação atualizadas no banco de dados!');
+            fecharModalRotina();
+            carregarPacientes(); 
+        } else {
+            const err = await response.json();
+            alert('❌ Erro ao salvar rotina: ' + (err.mensagem || 'Verifique as informações.'));
+        }
+    } catch (err) {
+        console.error('Erro ao conectar ao servidor:', err);
+        alert('Erro ao se comunicar com o banco de dados.');
+    }
+}
+async function checarStatusSOSDoBanco() {
+    try {
+        const res = await fetch('/api/sos/ativo');
+        if (res.ok) {
+            const sosAtivo = await res.json();
+            if (sosAtivo && sosAtivo.ativo) {
+                exibirAlertaSOS(sosAtivo);
+            }
+        }
+    } catch (err) {
+        console.error('Erro ao checar SOS no banco:', err);
+    }
+}
+
+setInterval(checarStatusSOSDoBanco, 5000);
+
 // =========================================================
 // MÓDULO CUIDADOR (US 4, US 5, US 7 & US 9)
 // =========================================================

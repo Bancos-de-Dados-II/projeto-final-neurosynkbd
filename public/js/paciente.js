@@ -165,13 +165,101 @@ function carregarFotosSalvas() {
         }
     });
 }
+document.addEventListener('DOMContentLoaded', () => {
+    carregarCuidadorDoBanco();
+});
 
-// Executa ao carregar a página
+async function carregarCuidadorDoBanco() {
+    const containerCuidador = document.getElementById('info-cuidador');
+    if (!containerCuidador) return;
+
+    try {
+        const response = await fetch('/api/pacientes/meu-perfil');
+        if (!response.ok) throw new Error('Não foi possível carregar os dados.');
+
+        const paciente = await response.json();
+
+        if (paciente.cuidador) {
+            containerCuidador.innerHTML = `
+                <p><strong>Nome:</strong> ${escapeHTML(paciente.cuidador.nome || 'Não informado')}</p>
+                <p><strong>E-mail:</strong> ${escapeHTML(paciente.cuidador.email || 'Não informado')}</p>
+            `;
+        } else {
+            containerCuidador.innerHTML = `
+                <p style="color: #d97706;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Você ainda não está vinculado a nenhum cuidador no sistema.
+                </p>`;
+        }
+    } catch (err) {
+        console.error('Erro ao buscar cuidador:', err);
+        containerCuidador.innerHTML = `<p style="color: red;">Erro ao carregar cuidador vinculado.</p>`;
+    }
+}
+
+function dispararSOS() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => enviarSOSParaBanco(pos.coords.latitude, pos.coords.longitude),
+            () => enviarSOSParaBanco(-23.55052, -46.633308) 
+        );
+    } else {
+        enviarSOSParaBanco(-23.55052, -46.633308);
+    }
+}
+
+async function enviarSOSParaBanco(lat, lng) {
+    try {
+        const response = await fetch('/api/sos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                lat: lat,
+                lng: lng,
+                dataHora: new Date().toISOString()
+            })
+        });
+
+        if (response.ok) {
+            alert('🚨 Alerta SOS registrado com sucesso no banco de dados!');
+        } else {
+            const err = await response.json();
+            alert('❌ Erro ao enviar SOS: ' + (err.mensagem || 'Tente novamente.'));
+        }
+    } catch (err) {
+        console.error('Erro ao conectar ao servidor para envio de SOS:', err);
+        alert('Erro de conexão ao enviar SOS.');
+    }
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+async function enviarAlertaSOS(pacienteId, lat, lng) {
+    const sosData = {
+        ativo: true,
+        pacienteId: pacienteId,
+        lat: lat,
+        lng: lng,
+        dataHora: new Date().toISOString()
+    };
+    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+    try {
+        await fetch('/api/sos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sosData)
+        });
+        console.log('🚨 Alerta SOS enviado com sucesso para o servidor!');
+    } catch (err) {
+        console.error('Erro ao enviar alerta SOS para o backend:', err);
+    }
+}
 document.addEventListener('DOMContentLoaded', () => {
   carregarFotosSalvas();
   carregarDadosPaciente();
 });
-// Busca os dados do paciente e atualiza o nome do cuidador na tela
+
 async function carregarDadosPaciente() {
   try {
     // Pega o ID do paciente salvo no login/localStorage (ou usa 1 como fallback)

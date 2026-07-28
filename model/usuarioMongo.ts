@@ -4,7 +4,8 @@ export interface IUsuario extends Document {
   nome: string;
   email: string;
   senha?: string;
-  tipo_usuario: 'Paciente' | 'Cuidador' | 'Terapeuta';
+  tipo_usuario: 'Paciente' | 'Cuidador' | 'Terapeuta' | 'Medico';
+  proxima_medicacao?: string; // <--- NOVO CAMPO
   localizacao?: {
     type: string;
     coordinates: number[]; 
@@ -38,6 +39,7 @@ const UsuarioSchema = new Schema<IUsuario>(
       enum: ['Paciente', 'Cuidador', 'Terapeuta', 'Medico'],
       set: (val: string) => val ? val.charAt(0).toUpperCase() + val.slice(1).toLowerCase() : val
     },
+    proxima_medicacao: { type: String, default: '' },
     localizacao: {
       type: {
         type: String,
@@ -49,7 +51,6 @@ const UsuarioSchema = new Schema<IUsuario>(
         required: false
       }
     },
-    // Campo inserido DENTRO do Schema:
     pacientesVinculados: [{ 
       type: Schema.Types.ObjectId, 
       ref: 'Usuario' 
