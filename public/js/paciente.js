@@ -14,6 +14,60 @@ let passosAtuais = [];
 let indiceAtual = 0;
 
 // =========================================================
+// CONTROLE DO PASSO A PASSO ("TÔ TRAVADO")
+// =========================================================
+
+let passoAtualIndex = 0;
+const passosExemplo = [
+    { titulo: "Passo 1", desc: "Respire fundo e identifique o primeiro objeto necessário." },
+    { titulo: "Passo 2", desc: "Inicie a primeira ação da tarefa com calma." },
+    { titulo: "Passo 3", desc: "Conclua a última parte e organize seu espaço." }
+];
+
+// Função para avançar as etapas
+function avancarPasso() {
+    if (passoAtualIndex < passosExemplo.length - 1) {
+        passoAtualIndex++;
+        renderizarPassoAtual();
+    } else {
+        alert('🎉 Parabéns! Você concluiu todos os passos!');
+        fecharModalTravado();
+    }
+}
+
+function renderizarPassoAtual() {
+    const passo = passosExemplo[passoAtualIndex];
+    const totalPassos = passosExemplo.length;
+    const porcentagem = Math.round(((passoAtualIndex + 1) / totalPassos) * 100);
+
+    // Atualiza Progresso
+    const txtStep = document.getElementById('progress-step-text');
+    const txtPercent = document.getElementById('progress-percent-text');
+    const fillBar = document.getElementById('progress-fill');
+
+    if (txtStep) txtStep.innerText = `Passo ${passoAtualIndex + 1} de ${totalPassos}`;
+    if (txtPercent) txtPercent.innerText = `${porcentagem}%`;
+    if (fillBar) fillBar.style.width = `${porcentagem}%`;
+
+    // Atualiza Textos do Passo
+    const elTitle = document.getElementById('modal-step-title');
+    const elList = document.getElementById('modal-steps-list');
+
+    if (elTitle) elTitle.innerText = passo.titulo;
+    if (elList) elList.innerHTML = `<li>${passo.desc}</li>`;
+}
+
+function fecharModalTravado() {
+    const modal = document.getElementById('modal-travado');
+    if (modal) modal.style.display = 'none';
+    passoAtualIndex = 0; // reseta para a próxima vez
+}
+
+// ⚠️ ESSENCIAL: Expor as funções para o HTML (evita ReferenceError)
+window.avancarPasso = avancarPasso;
+window.fecharModalTravado = fecharModalTravado;
+
+// =========================================================
 // TA.2: REGISTRO DE TRAVAMENTO NO BANCO DE DADOS
 // =========================================================
 async function registrarEventoTravamento(tarefaId) {

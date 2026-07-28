@@ -25,6 +25,8 @@ function validarAcesso(roleEsperado) {
     }
 }
 
+
+
 // Executa a busca de pacientes assim que a página carrega
 document.addEventListener('DOMContentLoaded', () => {
     carregarPacientes();
