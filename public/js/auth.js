@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/usuarios';
+const API_URL = '/usuarios';
 
 window.fazerLoginDireto = async function(e) {
     if (e) e.preventDefault();
@@ -30,10 +30,13 @@ window.fazerLoginDireto = async function(e) {
             let roleParaSalvar = 'Paciente';
             if (tipoNormalizado === 'cuidador') roleParaSalvar = 'Cuidador';
             if (tipoNormalizado === 'terapeuta' || tipoNormalizado === 'medico') roleParaSalvar = 'Terapeuta';
-
+            const idEncontrado = data.userId || data.id || data._id || data.usuario?.id || data.usuario?._id || '';
+            const nomeEncontrado = data.userName || data.nome || data.usuario?.nome || '';
             localStorage.setItem('userRole', roleParaSalvar);
-            localStorage.setItem('userName', data.userName || data.usuario?.nome || '');
-            localStorage.setItem('userId', data.usuario?._id || data.usuario?.id || '');
+            localStorage.setItem('userName', nomeEncontrado);
+            localStorage.setItem('userId', idEncontrado);
+            localStorage.setItem('usuarioId', idEncontrado);
+            localStorage.setItem('paciente_id', idEncontrado);
 
             if (tipoNormalizado === 'paciente') {
                 window.location.href = '/dashboards/paciente.html';
@@ -52,6 +55,7 @@ window.fazerLoginDireto = async function(e) {
         alert('Erro ao conectar ao servidor.');
     }
 };
+
 window.fazerCadastro = async function(e) {
     if (e) e.preventDefault();
 
@@ -64,14 +68,14 @@ window.fazerCadastro = async function(e) {
     const email = emailEl ? emailEl.value.trim() : '';
     const senha = senhaEl ? senhaEl.value.trim() : '';
     const tipo_usuario = tipoEl ? tipoEl.value.toLowerCase() : '';
+
     if (!nome || !email || !senha || !tipo_usuario) {
         alert("Preencha todos os campos obrigatórios!");
         return;
     }
 
     try {
-        // Colocando a URL direta e absoluta para evitar qualquer erro de prefixo
-        const response = await fetch('/usuarios/cadastro', {
+        const response = await fetch(`${API_URL}/cadastro`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, email, senha, tipo_usuario })
@@ -81,7 +85,8 @@ window.fazerCadastro = async function(e) {
 
         if (response.ok) {
             alert("✅ Usuário cadastrado com sucesso!");
-            document.getElementById('form-cadastro').reset();
+            const formCad = document.getElementById('form-cadastro');
+            if (formCad) formCad.reset();
         } else {
             alert("❌ Erro ao cadastrar: " + (data.error || data.mensagem || "Tente novamente."));
         }

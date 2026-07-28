@@ -116,7 +116,7 @@
     }
 
     async function carregarRotinasDoBanco() {
-        const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
+        const pacienteId = localStorage.getItem('userId') || localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
         const container = document.getElementById('tasks-container');
 
         if (!pacienteId) {
