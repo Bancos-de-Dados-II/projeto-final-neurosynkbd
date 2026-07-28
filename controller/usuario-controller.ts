@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 import bcrypt from 'bcryptjs';
+import { Types } from 'mongoose';
 
 export const buscarPacientePorId = async (req: Request, res: Response) => {
   try {
@@ -14,9 +15,10 @@ export const buscarPacientePorId = async (req: Request, res: Response) => {
     }
 
     // 2. Busca no banco qual Cuidador tem o ID deste paciente no array pacientesVinculados
-    const cuidador = await UsuarioMongo.findOne({
-      pacientesVinculados: id
-    }).select('nome email');
+   // Substitua as linhas 18 a 20 por:
+const cuidador = await UsuarioMongo.findOne({
+  pacientesVinculados: id
+} as any).select('nome email');
 
     // 3. Retorna os dados do paciente + os dados do cuidador encontrado
     res.status(200).json({
@@ -109,34 +111,42 @@ export async function getUsuarioById(req: Request, res: Response): Promise<Respo
 }
 
 export async function atualizarUsuario(req: Request, res: Response): Promise<Response | void> {
-    try {
-        const { id } = req.params;
-        const { nome, tipo_usuario, senha } = req.body;
-        const dadosAtualizados: any = {};
-        if (nome) dadosAtualizados.nome = nome;
-        if (tipo_usuario) dadosAtualizados.tipo_usuario = tipo_usuario;
-        if (senha) {
-            const salt = await bcrypt.genSalt(10);
-            dadosAtualizados.senha = await bcrypt.hash(senha, salt);
-        }
+  try {
+    const { id } = req.params;
+    const { nome, idade, diagnosticoBase, diagnostico, cpf, status } = req.body;
 
-        const usuarioAtualizado = await UsuarioMongo.findByIdAndUpdate(
-            id,
-            dadosAtualizados,
-            { new: true } 
-        ).select('-senha');
+    const dadosAtualizados: any = {};
 
-        if (!usuarioAtualizado) {
-            return res.status(404).json({ error: 'Usuário não encontrado para atualização.' });
-        }
-
-        return res.status(200).json({
-            message: 'Usuário atualizado com sucesso!',
-            usuario: usuarioAtualizado
-        });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message });
+    if (nome) dadosAtualizados.nome = nome;
+    if (idade !== undefined && idade !== '') dadosAtualizados.idade = Number(idade);
+    
+    // Mapeia tanto diagnosticoBase quanto diagnostico
+    const diagFinal = diagnosticoBase || diagnostico;
+    if (diagFinal) {
+      dadosAtualizados.diagnosticoBase = diagFinal;
+      dadosAtualizados.diagnostico = diagFinal; // Salva nos dois para garantir
     }
+
+    if (cpf) dadosAtualizados.cpf = cpf;
+    if (status) dadosAtualizados.status = status;
+
+    const usuarioAtualizado = await UsuarioMongo.findByIdAndUpdate(
+      id,
+      dadosAtualizados,
+      { new: true }
+    ).select('-senha');
+
+    if (!usuarioAtualizado) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    return res.status(200).json({
+      message: 'Usuário atualizado com sucesso!',
+      usuario: usuarioAtualizado
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 }
 
 export async function deletarUsuario(req: Request, res: Response): Promise<Response | void> {

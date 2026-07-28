@@ -143,62 +143,110 @@ const resposta = await fetch('/usuarios/vincular-paciente', {
 }
 
 // Função chamada ao clicar no ícone do olho 👁️
+// Abre e carrega os dados
 async function verDetalhes(id) {
+    alternarModoEdicao(false); // Sempre começa em modo leitura
     const modal = document.getElementById('modalDetalhesPaciente');
-    const nomeEl = document.getElementById('modalNomePaciente');
-    const idadeEl = document.getElementById('modalIdadePaciente');
-    const diagnosticoEl = document.getElementById('modalDiagnosticoPaciente');
-    const cpfEl = document.getElementById('modalCpfPaciente');
-    const statusEl = document.getElementById('modalStatusPaciente');
-
-    // Estado inicial / Carregando
-    nomeEl.innerText = 'Carregando...';
-    idadeEl.innerText = '-';
-    diagnosticoEl.innerText = '-';
-    cpfEl.innerText = '-';
-    statusEl.innerText = '-';
+    document.getElementById('modalIdPaciente').value = id;
+    
     modal.style.display = 'flex';
 
     try {
-        // Busca os dados do paciente direto da API / Banco
-        const response = await fetch(`/api/usuarios/${id}`);
-        
-        if (!response.ok) {
-            throw new Error('Erro ao buscar paciente');
-        }
+        const response = await fetch(`/usuarios/${id}`);
+        const paciente = response.ok ? await response.json() : {};
 
-        const paciente = await response.json();
-        
-        // Mapeia os dados retornados do MongoDB/PostgreSQL
-        nomeEl.innerText = paciente.nome || paciente.nomeCompleto || 'Não informado';
-        idadeEl.innerText = paciente.idade ? `${paciente.idade} anos` : (paciente.dataNascimento || 'Não informada');
-        diagnosticoEl.innerText = paciente.diagnosticoBase || paciente.diagnostico || 'Não informado';
-        cpfEl.innerText = paciente.cpf || 'Não informado';
-        statusEl.innerText = paciente.status || 'Ativo';
-
+        preencherCamposModal(paciente);
     } catch (error) {
-        console.warn('Recorrendo aos dados em memória da tabela:', error);
-        
-        // Fallback: busca da lista de pacientes já carregada na tela se a rota individual não responder
-        if (window.pacientesLista) {
-            const p = window.pacientesLista.find(item => (item._id || item.id) === id);
-            if (p) {
-                nomeEl.innerText = p.nome || 'Não informado';
-                idadeEl.innerText = p.idade ? `${p.idade} anos` : 'Não informada';
-                diagnosticoEl.innerText = p.diagnosticoBase || p.diagnostico || 'Não informado';
-                cpfEl.innerText = p.cpf || 'Não informado';
-                statusEl.innerText = p.status || 'Ativo';
-                return;
+        console.warn('Erro ao carregar paciente:', error);
+    }
+}
+
+// Preenche os campos do modal (texto e inputs)
+function preencherCamposModal(p) {
+    document.getElementById('modalNomePacienteDisplay').innerText = p.nome || 'Detalhes do Paciente';
+    
+    // Textos de Visualização
+    document.getElementById('viewNome').innerText = p.nome || 'Não informado';
+    document.getElementById('viewIdade').innerText = p.idade ? `${p.idade} anos` : 'Não informada';
+    document.getElementById('viewDiagnostico').innerText = p.diagnosticoBase || p.diagnostico || 'Não informado';
+    document.getElementById('viewCpf').innerText = p.cpf || 'Não informado';
+    document.getElementById('viewStatus').innerText = p.status || 'Ativo';
+
+    // Inputs de Edição
+    document.getElementById('editNome').value = p.nome || '';
+    document.getElementById('editIdade').value = p.idade || '';
+    document.getElementById('editDiagnostico').value = p.diagnosticoBase || p.diagnostico || '';
+    document.getElementById('editCpf').value = p.cpf || '';
+    document.getElementById('editStatus').value = p.status || 'Ativo';
+}
+
+// Alterna entre modo Leitura e Edição
+function alternarModoEdicao(editando) {
+    const views = document.querySelectorAll('.campo-view');
+    const edits = document.querySelectorAll('.campo-edit');
+    const btnSalvar = document.getElementById('btnSalvarModal');
+    const btnModoEdicao = document.getElementById('btnModoEdicao');
+
+    views.forEach(el => el.style.display = editando ? 'none' : 'inline-block');
+    edits.forEach(el => el.style.display = editando ? 'block' : 'none');
+    
+    btnSalvar.style.display = editando ? 'inline-block' : 'none';
+    btnModoEdicao.style.display = editando ? 'none' : 'inline-block';
+}
+
+// Envia os dados editados para o Banco de Dados
+async function salvarDadosPaciente(event) {
+    event.preventDefault();
+
+// 1. Pega o ID diretamente do input hidden 'modalIdPaciente'
+const id = document.getElementById('modalIdPaciente')?.value;
+
+if (!id) {
+    alert('Erro: ID do paciente não foi encontrado no modal.');
+    return;
+}
+
+// 2. Coleta os dados convertendo idade para número
+const payload = {
+    nome: document.getElementById('editNome').value,
+    idade: Number(document.getElementById('editIdade').value) || 0,
+    diagnosticoBase: document.getElementById('editDiagnostico').value,
+    cpf: document.getElementById('editCpf').value,
+    status: document.getElementById('editStatus').value
+};
+
+    try {
+        const response = await fetch(`/usuarios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const resData = await response.json();
+
+        if (response.ok) {
+            alert('Dados atualizados com sucesso!');
+
+            // Pega o objeto retornado da API (pode ser resData, resData.usuario ou resData.paciente)
+            const dadosSalvos = resData.usuario || resData.paciente || resData || payload;
+
+            preencherCamposModal(dadosSalvos);
+            alternarModoEdicao(false);
+
+            if (typeof carregarPacientes === 'function') {
+                carregarPacientes();
             }
+        } else {
+            alert(resData.mensagem || resData.error || 'Erro ao salvar no banco de dados.');
         }
-        
-        nomeEl.innerText = 'Detalhes do Paciente';
+    } catch (err) {
+        console.error('Erro:', err);
+        alert('Falha na comunicação com o servidor.');
     }
 }
 
 function fecharModalDetalhes() {
-    const modal = document.getElementById('modalDetalhesPaciente');
-    if (modal) modal.style.display = 'none';
+    document.getElementById('modalDetalhesPaciente').style.display = 'none';
 }
 
 function registrarRotina(idPaciente) {
@@ -271,7 +319,7 @@ const lng = coords ? coords[0] : (sosData.lng || -46.633308);
   }
 
   // Tenta o backend caso exista
-  fetch('/api/sos/active')
+  fetch('/sos/active')
     .then(res => res.json())
     .then(data => {
       if (data && data.ativo) {
