@@ -1,3 +1,8 @@
+import dns from 'node:dns';
+
+// Força o Node a resolver endereços via DNS do Google e do Cloudflare
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 import express, { type Application } from 'express';
 import cors from 'cors';
 import path from 'path';
