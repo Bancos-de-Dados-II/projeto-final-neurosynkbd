@@ -142,8 +142,63 @@ const resposta = await fetch('/usuarios/vincular-paciente', {
   }
 }
 
-function verDetalhes(idPaciente) {
-    alert(`Visualizando detalhes do paciente ID: ${idPaciente}`);
+// Função chamada ao clicar no ícone do olho 👁️
+async function verDetalhes(id) {
+    const modal = document.getElementById('modalDetalhesPaciente');
+    const nomeEl = document.getElementById('modalNomePaciente');
+    const idadeEl = document.getElementById('modalIdadePaciente');
+    const diagnosticoEl = document.getElementById('modalDiagnosticoPaciente');
+    const cpfEl = document.getElementById('modalCpfPaciente');
+    const statusEl = document.getElementById('modalStatusPaciente');
+
+    // Estado inicial / Carregando
+    nomeEl.innerText = 'Carregando...';
+    idadeEl.innerText = '-';
+    diagnosticoEl.innerText = '-';
+    cpfEl.innerText = '-';
+    statusEl.innerText = '-';
+    modal.style.display = 'flex';
+
+    try {
+        // Busca os dados do paciente direto da API / Banco
+        const response = await fetch(`/api/usuarios/${id}`);
+        
+        if (!response.ok) {
+            throw new Error('Erro ao buscar paciente');
+        }
+
+        const paciente = await response.json();
+        
+        // Mapeia os dados retornados do MongoDB/PostgreSQL
+        nomeEl.innerText = paciente.nome || paciente.nomeCompleto || 'Não informado';
+        idadeEl.innerText = paciente.idade ? `${paciente.idade} anos` : (paciente.dataNascimento || 'Não informada');
+        diagnosticoEl.innerText = paciente.diagnosticoBase || paciente.diagnostico || 'Não informado';
+        cpfEl.innerText = paciente.cpf || 'Não informado';
+        statusEl.innerText = paciente.status || 'Ativo';
+
+    } catch (error) {
+        console.warn('Recorrendo aos dados em memória da tabela:', error);
+        
+        // Fallback: busca da lista de pacientes já carregada na tela se a rota individual não responder
+        if (window.pacientesLista) {
+            const p = window.pacientesLista.find(item => (item._id || item.id) === id);
+            if (p) {
+                nomeEl.innerText = p.nome || 'Não informado';
+                idadeEl.innerText = p.idade ? `${p.idade} anos` : 'Não informada';
+                diagnosticoEl.innerText = p.diagnosticoBase || p.diagnostico || 'Não informado';
+                cpfEl.innerText = p.cpf || 'Não informado';
+                statusEl.innerText = p.status || 'Ativo';
+                return;
+            }
+        }
+        
+        nomeEl.innerText = 'Detalhes do Paciente';
+    }
+}
+
+function fecharModalDetalhes() {
+    const modal = document.getElementById('modalDetalhesPaciente');
+    if (modal) modal.style.display = 'none';
 }
 
 function registrarRotina(idPaciente) {
