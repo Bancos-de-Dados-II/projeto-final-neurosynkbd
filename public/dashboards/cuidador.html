@@ -167,61 +167,67 @@
     </main>
 
     <script src="../js/cuidador.js"></script>
-   <!-- Modal de Detalhes e Edição do Paciente -->
-<div id="modalDetalhesPaciente" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-  <div style="background: #fff; padding: 24px; border-radius: 12px; width: 90%; max-width: 480px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;">
+   <!-- Modal Detalhes / Edição do Paciente -->
+<div id="modalDetalhesPaciente" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+  <div style="background: white; padding: 24px; border-radius: 12px; width: 450px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
     
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; color: #1e293b; font-size: 1.25rem;" id="modalNomePacienteDisplay">Detalhes do Paciente</h3>
-      <button id="btnModoEdicao" onclick="alternarModoEdicao(true)" style="background: transparent; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 6px; cursor: pointer; color: #475569; font-size: 0.85rem;">
-        <i class="fa-solid fa-pen"></i> Editar
-      </button>
+    <!-- Cabeçalho do Modal -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 id="modalNomePacienteDisplay" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1e293b;">Arthur Leandro</h3>
+      <button type="button" id="btnEditarModal" onclick="habilitarEdicaoModal()" style="padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">✏️ Editar</button>
     </div>
-    
-    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0 16px 0;">
-    
-    <form id="formPaciente" onsubmit="salvarDadosPaciente(event)" style="display: flex; flex-direction: column; gap: 12px; color: #334155; font-size: 0.95rem;">
-      <input type="hidden" id="modalIdPaciente">
 
+    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0 16px 0;">
+
+    <!-- Formulário Principal -->
+    <form id="formPaciente" onsubmit="salvarDadosPaciente(event)" style="display: flex; flex-direction: column; gap: 12px; color: #334155; font-size: 0.95rem;">
+      <input type="hidden" id="modalIdPaciente" value="">
+
+      <!-- Nome -->
       <div>
         <label style="font-weight: bold; display: block; margin-bottom: 2px;">Nome Completo:</label>
-        <span class="campo-view" id="viewNome">-</span>
-        <input class="campo-edit" type="text" id="editNome" style="display:none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <span class="campo-view" id="viewNome">Não informado</span>
+        <input class="campo-edit" type="text" id="editNome" style="display: none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
       </div>
 
+      <!-- Idade -->
       <div>
         <label style="font-weight: bold; display: block; margin-bottom: 2px;">Idade:</label>
-        <span class="campo-view" id="viewIdade">-</span>
-        <input class="campo-edit" type="number" id="editIdade" style="display:none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <span class="campo-view" id="viewIdade">Não informada</span>
+        <input class="campo-edit" type="number" id="editIdade" style="display: none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
       </div>
 
+      <!-- Diagnóstico Base -->
       <div>
         <label style="font-weight: bold; display: block; margin-bottom: 2px;">Diagnóstico Base:</label>
-        <span class="campo-view" id="viewDiagnostico">-</span>
-        <input class="campo-edit" type="text" id="editDiagnostico" style="display:none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <span class="campo-view" id="viewDiagnostico">Não informado</span>
+        <input class="campo-edit" type="text" id="editDiagnostico" style="display: none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
       </div>
 
+      <!-- CPF -->
       <div>
         <label style="font-weight: bold; display: block; margin-bottom: 2px;">CPF:</label>
-        <span class="campo-view" id="viewCpf">-</span>
-        <input class="campo-edit" type="text" id="editCpf" style="display:none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="000.000.000-00">
+        <span class="campo-view" id="viewCpf">Não informado</span>
+        <input class="campo-edit" type="text" id="editCpf" style="display: none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
       </div>
 
+      <!-- Status -->
       <div>
         <label style="font-weight: bold; display: block; margin-bottom: 2px;">Status:</label>
-        <span class="campo-view" id="viewStatus" style="font-weight: 600; color: #16a34a;">-</span>
-        <select class="campo-edit" id="editStatus" style="display:none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <span class="campo-view" id="viewStatus" style="color: #16a34a; font-weight: 600;">Ativo</span>
+        <select class="campo-edit" id="editStatus" style="display: none; width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
           <option value="Ativo">Ativo</option>
           <option value="Inativo">Inativo</option>
-          <option value="Em observação">Em observação</option>
         </select>
       </div>
 
+      <!-- Botões -->
       <div style="margin-top: 16px; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
         <button type="button" onclick="fecharModalDetalhes()" style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer;">Fechar</button>
         <button type="submit" id="btnSalvarModal" style="display: none; padding: 8px 16px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Salvar</button>
       </div>
     </form>
+
   </div>
 </div>
 </body>

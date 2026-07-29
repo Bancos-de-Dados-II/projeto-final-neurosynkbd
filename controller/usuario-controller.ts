@@ -111,42 +111,51 @@ export async function getUsuarioById(req: Request, res: Response): Promise<Respo
 }
 
 export async function atualizarUsuario(req: Request, res: Response): Promise<Response | void> {
-  try {
-    const { id } = req.params;
-    const { nome, idade, diagnosticoBase, diagnostico, cpf, status } = req.body;
+    try {
+        const { id } = req.params;
+        const body = req.body;
 
-    const dadosAtualizados: any = {};
+        console.log('=== PAYLOAD RECEBIDO DO FRONTEND ===', body);
 
-    if (nome) dadosAtualizados.nome = nome;
-    if (idade !== undefined && idade !== '') dadosAtualizados.idade = Number(idade);
-    
-    // Mapeia tanto diagnosticoBase quanto diagnostico
-    const diagFinal = diagnosticoBase || diagnostico;
-    if (diagFinal) {
-      dadosAtualizados.diagnosticoBase = diagFinal;
-      dadosAtualizados.diagnostico = diagFinal; // Salva nos dois para garantir
+        // Montamos o objeto pegando qualquer variação dos nomes dos campos
+        const dadosAtualizados: any = {};
+
+        if (body.nome !== undefined) dadosAtualizados.nome = body.nome;
+        if (body.idade !== undefined && body.idade !== null) dadosAtualizados.idade = Number(body.idade);
+        if (body.cpf !== undefined) dadosAtualizados.cpf = body.cpf;
+        if (body.status !== undefined) dadosAtualizados.status = body.status;
+
+        // Aceita 'diagnosticoBase' OU 'diagnostico' enviando para o banco
+        const diag = body.diagnosticoBase || body.diagnostico;
+        if (diag !== undefined) {
+            dadosAtualizados.diagnostico = diag;
+        }
+
+        console.log('=== OBJETO QUE VAI PRO MONGO ===', dadosAtualizados);
+
+        // Atualização direta forçada via $set
+        const usuarioAtualizado = await UsuarioMongo.findByIdAndUpdate(
+            id,
+            { $set: dadosAtualizados },
+            { new: true, runValidators: false }
+        ).select('-senha');
+
+        if (!usuarioAtualizado) {
+            res.status(404).json({ error: 'Usuário não encontrado.' });
+            return;
+        }
+
+        console.log('=== USUÁRIO SALVO NO BANCO ===', usuarioAtualizado);
+
+        return res.status(200).json({
+            message: 'Dados atualizados com sucesso!',
+            usuario: usuarioAtualizado
+        });
+
+    } catch (err: any) {
+        console.error('Erro ao atualizar usuário:', err);
+        return res.status(500).json({ error: 'Erro interno ao atualizar: ' + err.message });
     }
-
-    if (cpf) dadosAtualizados.cpf = cpf;
-    if (status) dadosAtualizados.status = status;
-
-    const usuarioAtualizado = await UsuarioMongo.findByIdAndUpdate(
-      id,
-      dadosAtualizados,
-      { new: true }
-    ).select('-senha');
-
-    if (!usuarioAtualizado) {
-      return res.status(404).json({ error: 'Usuário não encontrado.' });
-    }
-
-    return res.status(200).json({
-      message: 'Usuário atualizado com sucesso!',
-      usuario: usuarioAtualizado
-    });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
-  }
 }
 
 export async function deletarUsuario(req: Request, res: Response): Promise<Response | void> {

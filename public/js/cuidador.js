@@ -144,23 +144,54 @@ const resposta = await fetch('/usuarios/vincular-paciente', {
 
 // Função chamada ao clicar no ícone do olho 👁️
 // Abre e carrega os dados
-async function verDetalhes(id) {
-    alternarModoEdicao(false); // Sempre começa em modo leitura
-    const modal = document.getElementById('modalDetalhesPaciente');
-    document.getElementById('modalIdPaciente').value = id;
+// 1. Função acionada ao clicar no botão de olho
+function abrirModalDetalhes(paciente) {
+    // Salva o ID no input hidden
+    document.getElementById('modalIdPaciente').value = paciente._id || paciente.id || '';
+
+    // Preenche os textos de visualização (campo-view)
+    document.getElementById('modalNomePacienteDisplay').innerText = paciente.nome || 'Paciente';
+    document.getElementById('viewNome').innerText = paciente.nome || 'Não informado';
+    document.getElementById('viewIdade').innerText = paciente.idade ? paciente.idade : 'Não informada';
+    document.getElementById('viewDiagnostico').innerText = paciente.diagnostico || paciente.diagnosticoBase || 'Não informado';
+    document.getElementById('viewCpf').innerText = paciente.cpf || 'Não informado';
+    document.getElementById('viewStatus').innerText = paciente.status || 'Ativo';
+
+    // Preenche os campos editáveis (campo-edit)
+    document.getElementById('editNome').value = paciente.nome || '';
+    document.getElementById('editIdade').value = paciente.idade || '';
+    document.getElementById('editDiagnostico').value = paciente.diagnostico || paciente.diagnosticoBase || '';
+    document.getElementById('editCpf').value = paciente.cpf || '';
+    document.getElementById('editStatus').value = paciente.status || 'Ativo';
+
+    // Garante modo de visualização (esconde inputs e botão salvar)
+    document.querySelectorAll('.campo-view').forEach(el => el.style.display = 'inline-block');
+    document.querySelectorAll('.campo-edit').forEach(el => el.style.display = 'none');
     
-    modal.style.display = 'flex';
+    const btnSalvar = document.getElementById('btnSalvarModal');
+    if (btnSalvar) btnSalvar.style.display = 'none';
 
-    try {
-        const response = await fetch(`/usuarios/${id}`);
-        const paciente = response.ok ? await response.json() : {};
-
-        preencherCamposModal(paciente);
-    } catch (error) {
-        console.warn('Erro ao carregar paciente:', error);
-    }
+    // Exibe o modal na tela
+    const modal = document.getElementById('modalDetalhesPaciente');
+    if (modal) modal.style.display = 'flex';
 }
 
+// 2. Função acionada ao clicar em "Editar" dentro do modal
+function habilitarEdicaoModal() {
+    // Esconde visualização e mostra inputs de edição
+    document.querySelectorAll('.campo-view').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.campo-edit').forEach(el => el.style.display = 'block');
+    
+    // Mostra o botão Salvar
+    const btnSalvar = document.getElementById('btnSalvarModal');
+    if (btnSalvar) btnSalvar.style.display = 'inline-block';
+}
+
+// 3. Função para fechar o modal
+function fecharModalDetalhes() {
+    const modal = document.getElementById('modalDetalhesPaciente');
+    if (modal) modal.style.display = 'none';
+}
 // Preenche os campos do modal (texto e inputs)
 function preencherCamposModal(p) {
     document.getElementById('modalNomePacienteDisplay').innerText = p.nome || 'Detalhes do Paciente';
@@ -196,52 +227,61 @@ function alternarModoEdicao(editando) {
 
 // Envia os dados editados para o Banco de Dados
 async function salvarDadosPaciente(event) {
-    event.preventDefault();
+    // 1. Cancela o comportamento nativo de submit do formulário imediatamente
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
-// 1. Pega o ID diretamente do input hidden 'modalIdPaciente'
-const id = document.getElementById('modalIdPaciente')?.value;
+    // 2. Pega o ID do input hidden do modal
+    const idPaciente = document.getElementById('modalIdPaciente')?.value;
 
-if (!id) {
-    alert('Erro: ID do paciente não foi encontrado no modal.');
-    return;
-}
+    if (!idPaciente) {
+        alert('Erro: ID do paciente não encontrado!');
+        return;
+    }
 
-// 2. Coleta os dados convertendo idade para número
-const payload = {
-    nome: document.getElementById('editNome').value,
-    idade: Number(document.getElementById('editIdade').value) || 0,
-    diagnosticoBase: document.getElementById('editDiagnostico').value,
-    cpf: document.getElementById('editCpf').value,
-    status: document.getElementById('editStatus').value
-};
+    // 3. Captura os valores dos campos
+    const nome = document.getElementById('editNome')?.value || document.getElementById('modalNomePacienteDisplay')?.innerText;
+    const idade = Number(document.getElementById('editIdade')?.value) || 0;
+    const cpf = document.getElementById('editCpf')?.value || '';
+    const status = document.getElementById('editStatus')?.value || 'Ativo';
+    const diagnostico = document.getElementById('editDiagnostico')?.value || '';
+
+    const payload = {
+        nome: nome,
+        idade: idade,
+        cpf: cpf,
+        status: status,
+        diagnostico: diagnostico,
+        diagnosticoBase: diagnostico
+    };
 
     try {
-        const response = await fetch(`/usuarios/${id}`, {
+        // Desabilita o botão para evitar cliques duplicados
+        const btnSalvar = document.getElementById('btnSalvarModal');
+        if (btnSalvar) btnSalvar.disabled = true;
+
+        const response = await fetch(`/usuarios/${idPaciente}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        const resData = await response.json();
-
         if (response.ok) {
             alert('Dados atualizados com sucesso!');
-
-            // Pega o objeto retornado da API (pode ser resData, resData.usuario ou resData.paciente)
-            const dadosSalvos = resData.usuario || resData.paciente || resData || payload;
-
-            preencherCamposModal(dadosSalvos);
-            alternarModoEdicao(false);
-
-            if (typeof carregarPacientes === 'function') {
-                carregarPacientes();
-            }
+            // Recarrega a página para exibir os novos dados
+            window.location.reload();
         } else {
-            alert(resData.mensagem || resData.error || 'Erro ao salvar no banco de dados.');
+            const err = await response.json();
+            alert('Erro ao atualizar: ' + (err.error || 'Erro no servidor'));
+            if (btnSalvar) btnSalvar.disabled = false;
         }
-    } catch (err) {
-        console.error('Erro:', err);
-        alert('Falha na comunicação com o servidor.');
+    } catch (error) {
+        console.error('Erro no fetch:', error);
+        alert('Erro de conexão com o servidor.');
+        const btnSalvar = document.getElementById('btnSalvarModal');
+        if (btnSalvar) btnSalvar.disabled = false;
     }
 }
 
