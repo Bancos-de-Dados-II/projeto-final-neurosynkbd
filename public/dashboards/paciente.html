@@ -200,8 +200,9 @@
     }
 
     // 7. Disparar SOS com GeoJSON (Exigência do Projeto)
+    // 7. Disparar SOS com GeoJSON + Campos Diretos do Backend
     function dispararSOS() {
-        const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
+        const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id') || localStorage.getItem('userId');
         const toast = document.getElementById('sos-toast');
 
         if (toast) {
@@ -212,41 +213,70 @@
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
                     const localizacaoGeoJSON = {
                         type: "Point",
-                        coordinates: [position.coords.longitude, position.coords.latitude] // Longitude ANTES no GeoJSON
+                        coordinates: [lng, lat] // Longitude primeiro no GeoJSON
                     };
-                    enviarAlertaSOS(pacienteId, localizacaoGeoJSON);
+
+                    enviarAlertaSOS(pacienteId, localizacaoGeoJSON, lat, lng);
                 },
                 (error) => {
-                    console.warn('⚠️ Usando geolocalização fallback:', error.message);
+                    console.warn('⚠️ Erro no GPS/Permissão, usando fallback:', error.message);
+                    
+                    // Fallback para teste caso GPS seja bloqueado
+                    const latFallback = -23.55052;
+                    const lngFallback = -46.633308;
                     const fallbackGeoJSON = {
                         type: "Point",
-                        coordinates: [-46.633308, -23.55052]
+                        coordinates: [lngFallback, latFallback]
                     };
-                    enviarAlertaSOS(pacienteId, fallbackGeoJSON);
+
+                    enviarAlertaSOS(pacienteId, fallbackGeoJSON, latFallback, lngFallback);
                 }
             );
+        } else {
+            alert('Geolocalização não é suportada neste navegador.');
         }
     }
 
-    async function enviarAlertaSOS(pacienteId, localizacaoGeoJSON) {
-        try {
-            await fetch('/api/sos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pacienteId: pacienteId,
-                    localizacao: localizacaoGeoJSON,
-                    dataHora: new Date().toISOString()
-                })
-            });
-            console.log('🚨 SOS enviado com GeoJSON com sucesso!');
-        } catch (err) {
-            console.error('❌ Erro de rede ao enviar SOS:', err);
-        }
-    }
+    async function enviarAlertaSOS(pacienteId, localizacaoGeoJSON, lat, lng) {
+    // 1. Atualiza o localStorage em tempo real para o cuidador.js exibir o mapa na Paraíba
+    const sosData = {
+        ativo: true,
+        lat: lat,
+        lng: lng,
+        pacienteId: pacienteId,
+        dataHora: new Date().toLocaleTimeString('pt-BR')
+    };
+    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+    console.log('📍 SOS salvo com sucesso no localStorage:', sosData);
 
+    // 2. Faz a chamada HTTP exatamente como o seu localizacao-router.ts e controller pedem
+    try {
+        const response = await fetch('/localizacao', {
+            method: 'PUT', // Método definido na linha 6 do localizacao-router.ts
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usuarioId: pacienteId,  // Exigido pelo localizacao-controller.ts
+                latitude: lat,          // Exigido pelo localizacao-controller.ts
+                longitude: lng          // Exigido pelo localizacao-controller.ts
+            })
+        });
+
+        if (response.ok) {
+            const resultado = await response.json();
+            console.log('🚨 Geolocalização salva no MongoDB com sucesso!', resultado);
+        } else {
+            const errData = await response.json();
+            console.warn('⚠️ Resposta de erro do servidor:', errData);
+        }
+    } catch (err) {
+        console.error('❌ Erro na requisição de geolocalização:', err);
+    }
+}
     document.addEventListener('DOMContentLoaded', carregarRotinasDoBanco);
 </script>
 </body>

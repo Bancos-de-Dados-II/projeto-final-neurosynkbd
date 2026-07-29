@@ -257,32 +257,42 @@ function escapeHTML(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 async function enviarAlertaSOS(pacienteId, localizacaoGeoJSON) {
-    const toast = document.getElementById('sos-toast');
-    if (toast) {
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3000);
-    }
+    const lng = localizacaoGeoJSON.coordinates[0];
+    const lat = localizacaoGeoJSON.coordinates[1];
 
+    // 1. Atualiza o localStorage em tempo real para o cuidador.js ler imediatamente
+    const sosData = {
+        ativo: true,
+        lat: lat,
+        lng: lng,
+        pacienteId: pacienteId,
+        dataHora: new Date().toLocaleTimeString('pt-BR')
+    };
+    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+    console.log('📍 SOS salvo no localStorage local:', sosData);
+
+    // 2. Envia para o Backend com as chaves EXATAS que o localizacao-controller.ts espera
     try {
         const response = await fetch('/api/sos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                pacienteId: pacienteId,
-                localizacao: localizacaoGeoJSON, 
-                dataHora: new Date().toISOString()
+                usuarioId: pacienteId,  // Exigido pelo controller
+                latitude: lat,          // Exigido pelo controller
+                longitude: lng          // Exigido pelo controller
             })
         });
+
         if (response.ok) {
-            console.log('🚨 Alerta SOS em GeoJSON enviado com sucesso!');
+            console.log('🚨 SOS registrado no MongoDB com sucesso!');
         } else {
-            console.error('Erro ao registrar SOS no servidor.');
+            const errData = await response.json();
+            console.warn('⚠️ Erro de validação da API:', errData);
         }
     } catch (err) {
-        console.error('❌ Erro de rede ao enviar SOS:', err);
+        console.error('❌ Erro de conexão ao enviar SOS:', err);
     }
 }
-
 async function carregarDadosPaciente() {
   try {
     // Pega o ID do paciente salvo no login/localStorage (ou usa 1 como fallback)

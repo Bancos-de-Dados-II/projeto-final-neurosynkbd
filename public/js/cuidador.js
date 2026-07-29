@@ -5,30 +5,29 @@ function validarAcesso(roleEsperado) {
     const role = (localStorage.getItem('userRole') || '').toUpperCase();
     const nome = localStorage.getItem('userName');
 
-    // 1. Se não tiver sessão (não está logado)
     if (!role) {
         window.location.href = '../index.html';
         return;
     }
 
-    // 2. Se o perfil for diferente de CUIDADOR
     if (role !== roleEsperado) {
         alert('Acesso negado para o seu perfil!');
         window.location.href = '../index.html';
         return;
     }
 
-    // 3. Exibe o nome do usuário na navbar
     const userNameElement = document.getElementById('user-name');
     if (userNameElement) {
         userNameElement.innerHTML = `<i class="fa-regular fa-circle-user"></i> Olá, ${nome || 'Cuidador'}`;
     }
 }
 
-// Executa a busca de pacientes assim que a página carrega
+// Executa as verificações assim que a página carrega
 document.addEventListener('DOMContentLoaded', () => {
     carregarPacientes();
     configurarLogout();
+    checarStatusSOS();
+    setInterval(checarStatusSOS, 3000); // Roda o monitoramento a cada 3s
 });
 
 // ----------------------------------------------------
@@ -39,19 +38,15 @@ async function carregarPacientes() {
     const countElement = document.getElementById('count-pacientes');
 
     try {
-        // Altere a URL caso seu endpoint de listar pacientes seja diferente:
         const response = await fetch('http://localhost:3000/usuarios?tipo=PACIENTE');
-        
         if (!response.ok) throw new Error('Erro ao buscar pacientes');
         
         const pacientes = await response.json();
 
-        // Atualiza o contador no card estatístico
         if (countElement) {
             countElement.textContent = pacientes.length || 0;
         }
 
-        // Se não houver pacientes no banco
         if (!pacientes || pacientes.length === 0) {
             tabelaBody.innerHTML = `
                 <tr>
@@ -62,74 +57,39 @@ async function carregarPacientes() {
             return;
         }
 
-        // Preenche a tabela com os dados reais
-        // Substitua o trecho dentro do .map da função carregarPacientes():
-tabelaBody.innerHTML = pacientes.map(p => `
-    <tr>
-        <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.email || ''}</small></td>
-        <td><span class="status-badge active">Ativo</span></td>
-        <td>${p.proxima_medicacao || 'Sem medicação agendada'}</td>
-        <td>
-            <button class="btn-icon" onclick="verDetalhes('${p._id || p.id}')" title="Ver Detalhes">
-                <i class="fa-solid fa-eye"></i>
-            </button>
-            <button class="btn-icon" onclick="abrirModalRotina('${p._id || p.id}', '${p.nome}')" title="Registrar Rotina">
-                <i class="fa-solid fa-notes-medical"></i>
-            </button>
-        </td>
-    </tr>
-`).join('');
+        tabelaBody.innerHTML = pacientes.map(p => `
+            <tr>
+                <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.email || ''}</small></td>
+                <td><span class="status-badge active">Ativo</span></td>
+                <td>${p.proxima_medicacao || 'Sem medicação agendada'}</td>
+                <td>
+                    <button class="btn-icon" onclick="verDetalhes('${p._id || p.id}')" title="Ver Detalhes">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button class="btn-icon" onclick="abrirModalRotina('${p._id || p.id}', '${p.nome}')" title="Registrar Rotina">
+                        <i class="fa-solid fa-notes-medical"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
 
     } catch (error) {
         console.error('Erro:', error);
-        tabelaBody.innerHTML = `
-            <tr>
-                <td colspan="4" style="text-align: center; color: #ef4444;">
-                    Erro ao carregar a lista de pacientes. Verifique a conexão com a API.
-                </td>
-            </tr>`;
-    }
-    async function enviarTarefaPaciente(event) {
-    event.preventDefault();
-
-    const pacienteId = document.getElementById('select-paciente-tarefa').value;
-    const titulo = document.getElementById('titulo-tarefa-input').value.trim();
-
-    if (!pacienteId || !titulo) {
-        alert('Selecione um paciente e informe o título da tarefa.');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/tarefas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                paciente_id: pacienteId,
-                titulo: titulo,
-                concluida: false
-            })
-        });
-
-        if (response.ok) {
-            alert('✅ Tarefa enviada ao paciente com sucesso!');
-            document.getElementById('form-criar-tarefa').reset();
-        } else {
-            const errData = await response.json();
-            alert('❌ Erro ao enviar tarefa: ' + (errData.mensagem || 'Tente novamente.'));
+        if (tabelaBody) {
+            tabelaBody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #ef4444;">
+                        Erro ao carregar a lista de pacientes. Verifique a conexão com a API.
+                    </td>
+                </tr>`;
         }
-    } catch (error) {
-        console.error('Erro ao enviar tarefa:', error);
-        alert('Erro ao se conectar ao servidor.');
     }
-}
 }
 
 // ----------------------------------------------------
-// FUNCIONALIDADE 3: Ações dos Botões
+// FUNCIONALIDADE 3: Ações dos Botões & Modais
 // ----------------------------------------------------
 async function vincularPaciente() {
-  // Pega o input da tela ou faz o prompt caso o input não exista
   const inputEmail = document.getElementById('email-paciente-input');
   let email = inputEmail ? inputEmail.value.trim() : '';
 
@@ -142,34 +102,20 @@ async function vincularPaciente() {
     return;
   }
 
-  // Pega o ID do cuidador logado
   const idCuidador = localStorage.getItem('usuarioId');
 
   try {
-    // ✅ Como deve ficar
-const resposta = await fetch('/usuarios/vincular-paciente', { 
+    const resposta = await fetch('/usuarios/vincular-paciente', { 
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        emailPaciente: email,
-        idCuidador: idCuidador
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailPaciente: email, idCuidador: idCuidador })
     });
 
     const dados = await resposta.json();
-
-    if (!resposta.ok) {
-      throw new Error(dados.mensagem || 'Erro ao vincular paciente');
-    }
+    if (!resposta.ok) throw new Error(dados.mensagem || 'Erro ao vincular paciente');
 
     alert(`✅ ${dados.mensagem}`);
-
-    // Limpa o input após enviar
     if (inputEmail) inputEmail.value = '';
-
-    // Recarrega a página para atualizar a lista
     location.reload();
 
   } catch (erro) {
@@ -204,15 +150,7 @@ function fecharModalDetalhes() {
     const modal = document.getElementById('modal-detalhes-paciente');
     if (modal) modal.style.display = 'none';
 }
-function popularSelectPacientes(pacientes) {
-    const select = document.getElementById('select-paciente-tarefa');
-    if (!select) return;
 
-    select.innerHTML = '<option value="">Selecione o Paciente...</option>' + 
-        pacientes.map(p => `<option value="${p._id || p.id}">${p.nome || p.email}</option>`).join('');
-}
-
-// Configuração do Botão de Logout
 function configurarLogout() {
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
@@ -222,43 +160,7 @@ function configurarLogout() {
         });
     }
 }
-// Renderização das linhas da tabela consultando a API
-function renderizarTabelaPacientes(pacientes) {
-    const tbody = document.getElementById('lista-meus-pacientes');
-    if (!tbody) return;
 
-    if (pacientes.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Nenhum paciente vinculado.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = pacientes.map(p => {
-        const id = p._id || p.id;
-        const nome = p.nome || p.email;
-        const medicacao = p.proxima_medicacao || p.proximaMedicacao || 'Sem medicação agendada';
-
-        return `
-            <tr>
-                <td>
-                    <strong>${escapeHTML(nome)}</strong><br>
-                    <small style="color:#64748b">${escapeHTML(p.email || '')}</small>
-                </td>
-                <td><span class="badge-status">Ativo</span></td>
-                <td>${escapeHTML(medicacao)}</td>
-                <td>
-                    <button class="btn-acao" title="Ver Detalhes" onclick="verDetalhes('${id}')">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    <button class="btn-acao" title="Registrar Rotina" onclick="abrirModalRotina('${id}', '${escapeHTML(nome)}')">
-                        <i class="fa-solid fa-folder-plus"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-// Abrir Modal de Rotina
 function abrirModalRotina(idPaciente, nomePaciente) {
     document.getElementById('rotina-paciente-id').value = idPaciente;
     document.getElementById('rotina-paciente-nome').textContent = `Paciente: ${nomePaciente}`;
@@ -305,9 +207,7 @@ async function salvarRotinaNoBanco(event) {
         if (response.ok) {
             alert('✅ Rotina e medicação cadastradas com sucesso!');
             fecharModalRotina();
-            if (typeof carregarPacientes === 'function') {
-                carregarPacientes();
-            }
+            if (typeof carregarPacientes === 'function') carregarPacientes();
         } else {
             alert('❌ Erro: ' + (dados.mensagem || dados.error || 'Verifique as informações.'));
         }
@@ -316,37 +216,21 @@ async function salvarRotinaNoBanco(event) {
         alert('❌ Erro de conexão ao salvar rotina.');
     }
 }
-async function checarStatusSOSDoBanco() {
-    try {
-        const res = await fetch('/api/sos/ativo');
-        if (res.ok) {
-            const sosAtivo = await res.json();
-            if (sosAtivo && sosAtivo.ativo) {
-                exibirAlertaSOS(sosAtivo);
-            }
-        }
-    } catch (err) {
-        console.error('Erro ao checar SOS no banco:', err);
-    }
-}
-
-setInterval(checarStatusSOSDoBanco, 5000);
 
 // =========================================================
-// MÓDULO CUIDADOR (US 4, US 5, US 7 & US 9)
+// MÓDULO CUIDADOR: MONITORAMENTO DE SOS E MAPA (LEAFLET)
 // =========================================================
 
-// Variáveis Globais para o Mapa e SOS
 let map = null;
 let marker = null;
-let sosAtivoId = null;
 
-// ---------------------------------------------------------
-// US 7 & 9: MONITORAMENTO DE SOS E MAPA (LEAFLET)
-// ---------------------------------------------------------
 function inicializarMapa(lat, lng) {
+  const containerMapa = document.getElementById('mapa-sos');
+  if (!containerMapa) return;
+
   if (!map) {
     map = L.map('mapa-sos').setView([lat, lng], 15);
+    
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
@@ -358,58 +242,66 @@ function inicializarMapa(lat, lng) {
     marker.setLatLng([lat, lng]);
     map.setView([lat, lng], 15);
   }
+
+  // Redimensiona o Leaflet no container visível
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 300);
 }
 
-// Polling automático para checar SOS (Local Storage + Fallback API)
-function checarStatusSOS() {
+async function checarStatusSOS() {
   const cardAlerta = document.getElementById('card-alerta-sos');
-  const sosDataRaw = localStorage.getItem('neurosync_sos_status');
+  
+  // 1. Tenta verificar via Backend/API (em tempo real)
+  try {
+    const pacienteId = localStorage.getItem('paciente_vinculado_id') || localStorage.getItem('usuarioId');
+    const response = await fetch(`/localizacao?usuarioId=${pacienteId}`);
+    
+    if (response.ok) {
+      const resData = await response.json();
+      
+      // Ajuste conforme o retorno da sua rota /localizacao
+      const coords = resData?.dados?.localizacao?.coordinates || resData?.coordinates;
+      if (coords && coords.length === 2) {
+        const lng = coords[0];
+        const lat = coords[1];
 
-  if (sosDataRaw) {
-    const sosData = JSON.parse(sosDataRaw);
-
-    if (sosData.ativo) {
-      if (cardAlerta) cardAlerta.style.display = 'block';
-
-      const lat = sosData.lat || -23.55052;
-      const lng = sosData.lng || -46.633308;
-
-      setTimeout(() => {
+        if (cardAlerta) cardAlerta.style.display = 'block';
         inicializarMapa(lat, lng);
-        if (map) map.invalidateSize();
-      }, 200);
-      return; // Já resolveu localmente!
-    } else {
-      if (cardAlerta) cardAlerta.style.display = 'none';
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Não foi possível consultar SOS no servidor, tentando localStorage:', err);
+  }
+
+  // 2. Fallback: Verifica no localStorage local se não conseguir pela API
+  const sosDataRaw = localStorage.getItem('neurosync_sos_status');
+  if (sosDataRaw) {
+    try {
+      const sosData = JSON.parse(sosDataRaw);
+      if (sosData && sosData.ativo) {
+        if (cardAlerta) cardAlerta.style.display = 'block';
+        const lat = parseFloat(sosData.lat) || -7.313;
+        const lng = parseFloat(sosData.lng) || -38.515;
+        inicializarMapa(lat, lng);
+        return;
+      }
+    } catch (e) {
+      console.error('Erro ao ler JSON de SOS:', e);
     }
   }
 
-  // Tenta o backend caso exista
-  fetch('/api/sos/active')
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.ativo) {
-        sosAtivoId = data.id;
-        if (cardAlerta) cardAlerta.style.display = 'block';
-
-        const lat = data.latitude || -23.55052;
-        const lng = data.longitude || -46.633308;
-
-        setTimeout(() => {
-          inicializarMapa(lat, lng);
-          if (map) map.invalidateSize();
-        }, 200);
-      } else if (cardAlerta) {
-        cardAlerta.style.display = 'none';
-        sosAtivoId = null;
-      }
-    })
-    .catch(err => console.warn('Aguardando servidor/API de SOS...', err));
+  if (cardAlerta) cardAlerta.style.display = 'none';
 }
+window.addEventListener('storage', (event) => {
+  if (event.key === 'neurosync_sos_status') {
+    checarStatusSOS();
+  }
+});
 
 // Botão: Marcar SOS como Resolvido
 window.marcarSosComoResolvido = function() {
-  // Limpa o estado local de emergência
   const sosDataRaw = localStorage.getItem('neurosync_sos_status');
   if (sosDataRaw) {
     const sosData = JSON.parse(sosDataRaw);
@@ -421,60 +313,8 @@ window.marcarSosComoResolvido = function() {
   if (cardAlerta) cardAlerta.style.display = 'none';
 
   alert('✅ SOS marcado como resolvido!');
-
-  if (!sosAtivoId) return;
-
-  fetch(`/api/sos/${sosAtivoId}/resolve`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: 'resolvido' })
-  })
-  .then(res => {
-    sosAtivoId = null;
-  })
-  .catch(err => console.error('Erro ao resolver SOS na API:', err));
 };
 
-// ---------------------------------------------------------
-// US 4: UPLOAD DE FOTOS PARA PERSONALIZAÇÃO
-// ---------------------------------------------------------
-window.fazerUploadFoto = function(event) {
-  // Evita que o formulário recarregue a página antes de salvar a foto
-  if (event) event.preventDefault();
-  
-  const fileInput = document.getElementById('input-foto-tarefa');
-  const inputId = document.getElementById('input-tarefa-id');
-
-  if (!fileInput || !fileInput.files[0]) {
-    alert('⚠️ Por favor, escolha um arquivo de imagem primeiro!');
-    return;
-  }
-
-  const tarefaId = inputId ? inputId.value.trim() : '101';
-  if (!tarefaId) {
-    alert('⚠️ Digite o ID da tarefa (ex: 101)!');
-    return;
-  }
-
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    const imagemBase64 = e.target.result;
-
-    // Salva com a chave exata que o paciente procura
-    localStorage.setItem(`foto_tarefa_${tarefaId}`, imagemBase64);
-    
-    console.log(`💾 Foto salva no localStorage com a chave: foto_tarefa_${tarefaId}`);
-    alert(`✅ Foto vinculada com sucesso à tarefa ${tarefaId}!`);
-  };
-
-  reader.readAsDataURL(file);
-};
-
-// ---------------------------------------------------------
-// US 5: PERMISSÕES DO TERAPEUTA (TOGGLE SWITCH)
-// ---------------------------------------------------------
 window.alterarPermissaoTerapeuta = function(autorizado) {
   const pacienteId = localStorage.getItem('paciente_id') || 1;
 
@@ -488,9 +328,3 @@ window.alterarPermissaoTerapeuta = function(autorizado) {
   })
   .catch(err => console.error('Erro ao atualizar permissão:', err));
 };
-
-// Inicialização de escuta automática
-document.addEventListener('DOMContentLoaded', () => {
-  checarStatusSOS();
-  setInterval(checarStatusSOS, 5000); // Checa a cada 5 segundos
-});
