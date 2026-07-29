@@ -243,7 +243,6 @@ function inicializarMapa(lat, lng) {
     map.setView([lat, lng], 15);
   }
 
-  // Redimensiona o Leaflet no container visível
   setTimeout(() => {
     if (map) map.invalidateSize();
   }, 300);
@@ -251,49 +250,61 @@ function inicializarMapa(lat, lng) {
 
 async function checarStatusSOS() {
   const cardAlerta = document.getElementById('card-alerta-sos');
-  
-  // 1. Tenta verificar via Backend/API (em tempo real)
+
   try {
-    const pacienteId = localStorage.getItem('paciente_vinculado_id') || localStorage.getItem('usuarioId');
-    const response = await fetch(`/localizacao?usuarioId=${pacienteId}`);
+    const response = await fetch('/localizacao');
     
     if (response.ok) {
-      const resData = await response.json();
-      
-      // Ajuste conforme o retorno da sua rota /localizacao
-      const coords = resData?.dados?.localizacao?.coordinates || resData?.coordinates;
-      if (coords && coords.length === 2) {
-        const lng = coords[0];
-        const lat = coords[1];
+      const sosData = await response.json();
 
+      if (sosData && sosData.ativo) {
         if (cardAlerta) cardAlerta.style.display = 'block';
-        inicializarMapa(lat, lng);
-        return;
+
+        const lat = parseFloat(sosData.latitude);
+        const lng = parseFloat(sosData.longitude);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          inicializarMapa(lat, lng);
+          return;
+        }
       }
+    } else if (response.status === 404) {
+      // Se a API retornou 404, significa que o SOS foi resolvido/desativado no backend
+      if (cardAlerta) cardAlerta.style.display = 'none';
+      localStorage.removeItem('neurosync_sos_status');
+      return;
     }
   } catch (err) {
-    console.warn('⚠️ Não foi possível consultar SOS no servidor, tentando localStorage:', err);
+    console.warn('Backend indisponível no momento.');
   }
 
-  // 2. Fallback: Verifica no localStorage local se não conseguir pela API
+  // Fallback apenas se não houver resposta do backend e houver item válido ativo no localStorage
   const sosDataRaw = localStorage.getItem('neurosync_sos_status');
   if (sosDataRaw) {
     try {
       const sosData = JSON.parse(sosDataRaw);
+
       if (sosData && sosData.ativo) {
         if (cardAlerta) cardAlerta.style.display = 'block';
-        const lat = parseFloat(sosData.lat) || -7.313;
-        const lng = parseFloat(sosData.lng) || -38.515;
-        inicializarMapa(lat, lng);
-        return;
+
+        const lat = parseFloat(sosData.lat);
+        const lng = parseFloat(sosData.lng);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          inicializarMapa(lat, lng);
+          return;
+        }
       }
     } catch (e) {
-      console.error('Erro ao ler JSON de SOS:', e);
+      console.error('Erro ao ler JSON de SOS do localStorage:', e);
     }
   }
 
+  // Se não houver nenhum SOS ativo
   if (cardAlerta) cardAlerta.style.display = 'none';
 }
+
+// Escuta alterações de outras abas em tempo real
 window.addEventListener('storage', (event) => {
   if (event.key === 'neurosync_sos_status') {
     checarStatusSOS();
@@ -301,30 +312,21 @@ window.addEventListener('storage', (event) => {
 });
 
 // Botão: Marcar SOS como Resolvido
-window.marcarSosComoResolvido = function() {
-  const sosDataRaw = localStorage.getItem('neurosync_sos_status');
-  if (sosDataRaw) {
-    const sosData = JSON.parse(sosDataRaw);
-    sosData.ativo = false;
-    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
+window.marcarSosComoResolvido = async function() {
+  try {
+    // 1. Limpa o SOS no banco MongoDB
+    await fetch('/localizacao', { method: 'DELETE' });
+
+    // 2. Limpa o localStorage local
+    localStorage.removeItem('neurosync_sos_status');
+
+    // 3. Esconde a caixa do alerta na hora
+    const cardAlerta = document.getElementById('card-alerta-sos');
+    if (cardAlerta) cardAlerta.style.display = 'none';
+
+    alert('✅ SOS marcado como resolvido!');
+  } catch (err) {
+    console.error('Erro ao resolver SOS:', err);
+    alert('⚠️ Erro ao conectar com o servidor para resolver o SOS.');
   }
-
-  const cardAlerta = document.getElementById('card-alerta-sos');
-  if (cardAlerta) cardAlerta.style.display = 'none';
-
-  alert('✅ SOS marcado como resolvido!');
-};
-
-window.alterarPermissaoTerapeuta = function(autorizado) {
-  const pacienteId = localStorage.getItem('paciente_id') || 1;
-
-  fetch(`/api/patients/${pacienteId}/permissions`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ compartilhar_terapeuta: autorizado })
-  })
-  .then(res => {
-    console.log(`Permissão do terapeuta atualizada para: ${autorizado}`);
-  })
-  .catch(err => console.error('Erro ao atualizar permissão:', err));
 };

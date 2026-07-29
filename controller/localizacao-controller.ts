@@ -1,6 +1,29 @@
 import type { Request, Response } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 
+export const obterGeolocalizacao = async (req: Request, res: Response) => {
+  try {
+    const usuarioComLocalizacao = await UsuarioMongo.findOne({
+      'localizacao.coordinates': { $exists: true }
+    }).sort({ updatedAt: -1 });
+
+    if (!usuarioComLocalizacao || !usuarioComLocalizacao.localizacao) {
+      return res.status(404).json({ mensagem: 'Nenhuma localização registrada.' });
+    }
+
+    const [longitude, latitude] = usuarioComLocalizacao.localizacao.coordinates;
+
+    return res.status(200).json({
+      ativo: true,
+      latitude,
+      longitude,
+      usuarioId: usuarioComLocalizacao._id
+    });
+  } catch (error) {
+    console.error('Erro ao buscar localização:', error);
+    return res.status(500).json({ mensagem: 'Erro interno do servidor.' });
+  }
+};
 
 export async function atualizarGeolocalizacao(req: Request, res: Response): Promise<Response | void> {
     try {
@@ -33,3 +56,17 @@ export async function atualizarGeolocalizacao(req: Request, res: Response): Prom
         return res.status(500).json({ error: error.message });
     }
 }
+
+export const resolverGeolocalizacao = async (req: Request, res: Response) => {
+  try {
+    await UsuarioMongo.updateMany(
+      { 'localizacao.coordinates': { $exists: true } },
+      { $unset: { localizacao: "" } }
+    );
+
+    return res.status(200).json({ mensagem: 'SOS resolvido com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao resolver SOS:', error);
+    return res.status(500).json({ mensagem: 'Erro interno do servidor.' });
+  }
+};
