@@ -3,40 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neurosync - Autenticação</title>
+    <title>NeuroSync - Autenticação</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/auth.js" defer></script>
 </head>
 <body>
+
     <div class="auth-container">
-        <h1>🧠 Neurosync</h1>
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fa-solid fa-brain logo-icon"></i>
+                <h1>NeuroSync</h1>
+                <p>Sistema de Apoio para Pacientes Neurodivergentes</p>
+            </div>
+            <div class="auth-tabs">
+                <button id="tab-login" class="tab-btn active" onclick="alternarAba('login')">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                </button>
+                <button id="tab-cadastro" class="tab-btn" onclick="alternarAba('cadastro')">
+                    <i class="fa-solid fa-user-plus"></i> Cadastrar
+                </button>
+            </div>
+            <form id="form-login" class="auth-form active" onsubmit="realizarLogin(event)">
+                <div class="form-group">
+                    <label for="login-email"><i class="fa-solid fa-envelope"></i> E-mail</label>
+                    <input type="email" id="login-email" required placeholder="seu@email.com">
+                </div>
 
-        <!-- Formulário de Login -->
-        <form id="form-login" onsubmit="fazerLoginDireto(event)">
-            <h2>Login</h2>
-            <input type="email" id="login-email" placeholder="E-mail" required>
-            <input type="password" id="login-senha" placeholder="Senha" required>
-            <button type="submit">Entrar</button>
-        </form>
+                <div class="form-group">
+                    <label for="login-senha"><i class="fa-solid fa-lock"></i> Senha</label>
+                    <input type="password" id="login-senha" required placeholder="••••••••">
+                </div>
 
-        <hr>
+                <button type="submit" class="btn-primary btn-full">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                </button>
+            </form>
+            <form id="form-cadastro" class="auth-form" onsubmit="realizarCadastro(event)">
+                <div class="form-group">
+                    <label for="cad-nome"><i class="fa-solid fa-user"></i> Nome Completo</label>
+                    <input type="text" id="cad-nome" required placeholder="Seu nome completo">
+                </div>
 
-        <!-- Formulário de Cadastro -->
-        <form id="form-cadastro" onsubmit="fazerCadastro(event)">
-            <h2>Criar Conta</h2>
-            <input type="text" id="cad-nome" placeholder="Nome Completo" required>
-            <input type="email" id="cad-email" placeholder="E-mail" required>
-            <input type="password" id="cad-senha" placeholder="Senha" required>
+                <div class="form-group">
+                    <label for="cad-email"><i class="fa-solid fa-envelope"></i> E-mail</label>
+                    <input type="email" id="cad-email" required placeholder="seu@email.com">
+                </div>
 
-            <label for="cad-role">Perfil:</label>
-            <select id="cad-role">
-  <option value="Paciente">Paciente</option>
-  <option value="Cuidador">Cuidador</option>
-  <option value="Terapeuta">Terapeuta</option>
-</select>
+                <div class="form-group">
+                    <label for="cad-senha"><i class="fa-solid fa-lock"></i> Senha</label>
+                    <input type="password" id="cad-senha" required placeholder="••••••••">
+                </div>
 
-            <button type="submit">Cadastrar</button>
-        </form>
+                <div class="form-group">
+    <label for="cad-tipo"><i class="fa-solid fa-users-gear"></i> Tipo de Usuário</label>
+    <select id="cad-tipo" required>
+        <option value="Paciente">Paciente</option>
+        <option value="Cuidador">Cuidador</option>
+        <option value="Medico">Médico / Terapeuta</option>
+    </select>
+</div>
+
+                <button type="submit" class="btn-primary btn-full">
+                    <i class="fa-solid fa-user-plus"></i> Criar Conta
+                </button>
+            </form>
+            <div id="auth-message" class="auth-message"></div>
+
+        </div>
     </div>
+    <script src="js/auth.js"></script>
 </body>
 </html>

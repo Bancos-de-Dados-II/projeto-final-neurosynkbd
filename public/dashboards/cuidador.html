@@ -3,91 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neurosync - Dashboard Cuidador</title>
-
-    <!-- 1. Estilo Principal do Projeto -->
-    <link rel="stylesheet" href="../css/cuidador.css">
-
-    <!-- 2. Ícones do Font Awesome -->
+    <title>NeuroSync - Cuidador</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <!-- 3. CSS e JS do Leaflet (Para o Mapa de SOS) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="dashboard-body">
 
-   <header class="navbar">
+    <header class="navbar">
         <div class="brand">
             <i class="fa-solid fa-brain logo-icon"></i>
-            <span>Neurosync</span>
-            <span class="role-badge">Painel do Cuidador</span>
+            <span>NeuroSync</span>
+            <span class="role-badge">Cuidador</span>
         </div>
         <div class="nav-user">
             <span class="user-greeting" id="user-name">
-                <i class="fa-regular fa-circle-user"></i> Olá, Cuidador
+                <i class="fa-regular fa-circle-user"></i> Olá
             </span>
-            <button id="btn-logout" type="button" class="btn-sair">Sair</button>
+            <button id="btn-logout" class="btn-sair">Sair</button>
         </div>
     </header>
 
-    <!-- Conteúdo do Dashboard -->
     <main class="dashboard-container">
-        
-        <!-- Boas-vindas + Ações Rápidas -->
-        <section class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
-            <div class="welcome-text">
+
+        <!-- Welcome + Vincular -->
+        <div class="welcome-section">
+            <div>
                 <h3>Gerenciamento de Pacientes</h3>
-                <p>Acompanhe a rotina, medicamentos e alertas dos seus pacientes em tempo real.</p>
+                <p>Acompanhe rotinas, medicamentos e alertas em tempo real.</p>
             </div>
-            
-            <form id="form-vincular-paciente" onsubmit="event.preventDefault(); vincularPaciente();" style="display: flex; gap: 8px; align-items: center;">
-                <label for="email-paciente-input" class="sr-only">E-mail do Paciente</label>
-                <input type="email" id="email-paciente-input" placeholder="E-mail do paciente..." required style="padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none;">
-                <button type="submit" class="btn-primary" style="white-space: nowrap; margin: 0;">
-                    <i class="fa-solid fa-user-plus"></i> Vincular Novo Paciente
-                </button>
-            </form>
-        </section>
-
-        <!-- US 7 & 9: MONITORAMENTO DE SOS E MAPA -->
-        <section id="card-alerta-sos" class="table-card" style="display: none; border-left: 5px solid #e74c3c; margin-bottom: 20px;">
-            <div class="table-header">
-                <h4 style="color: #e74c3c;"><i class="fa-solid fa-triangle-exclamation"></i> ALERTA DE SOS ATIVO!</h4>
-            </div>
-            <div style="padding: 15px;">
-                <p>O paciente acionou o botão de emergência. Acompanhe a localização abaixo:</p>
-                
-                <!-- Container do Mapa Leaflet -->
-                <div id="mapa-sos" style="height: 280px; width: 100%; border-radius: 8px; margin: 15px 0;"></div>
-
-                <button id="btn-resolver-sos" class="btn-primary" onclick="marcarSosComoResolvido()" style="background-color: #2ecc71; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer;">
-                    <i class="fa-solid fa-check-circle"></i> Marcar como Resolvido
+            <div style="display: flex; gap: 10px;">
+                <input type="email" id="email-paciente-input" placeholder="E-mail do paciente" style="padding: 10px 14px; border: none; border-radius: 6px; outline: none; width: 220px;">
+                <button id="btn-vincular" class="btn-primary" style="white-space: nowrap;">
+                    <i class="fa-solid fa-user-plus"></i> Vincular
                 </button>
             </div>
-        </section>
-        
-        <!-- US 5: PERMISSÕES & VÍNCULO TERAPÊUTICO -->
-        <section class="table-card" style="margin-bottom: 20px;">
-            <div class="table-header">
-                <h4><i class="fa-solid fa-user-shield"></i> Permissões & Vínculo Terapêutico</h4>
-            </div>
-            <div style="padding: 15px; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                    <strong>Compartilhar dados com o Terapeuta</strong>
-                    <p style="margin: 0; font-size: 0.85rem; color: #666;">Autoriza o terapeuta a visualizar históricos de rotina e relatórios de travamento.</p>
-                </div>
-                
-                <!-- Chave de Alternância (Toggle Switch) -->
-                <label class="switch">
-                    <input type="checkbox" id="toggle-permissao-terapeuta" onchange="alterarPermissaoTerapeuta(this.checked)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </section>
+        </div>
 
-        <!-- Grid de Cards Estatísticos (Resumo) -->
-        <section class="stats-grid">
+        <!-- Stats -->
+        <div class="stats-grid">
             <div class="stat-card">
                 <i class="fa-solid fa-hospital-user icon-blue"></i>
                 <div>
@@ -98,30 +52,60 @@
             <div class="stat-card">
                 <i class="fa-solid fa-pills icon-green"></i>
                 <div>
-                    <h4>--</h4>
-                    <p>Medicamentos Hoje</p>
+                    <h4 id="count-medicacoes">0</h4>
+                    <p>Medicações Hoje</p>
                 </div>
             </div>
             <div class="stat-card">
                 <i class="fa-solid fa-bell icon-orange"></i>
                 <div>
-                    <h4>0</h4>
+                    <h4 id="count-alertas">0</h4>
                     <p>Alertas Pendentes</p>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Tabela / Lista de Pacientes -->
-        <section class="table-card">
-            <div class="table-header">
-                <h4><i class="fa-solid fa-list-check"></i> Meus Pacientes</h4>
+        <!-- Alerta SOS -->
+        <div id="card-alerta-sos" class="table-card" style="display: none; border-left: 5px solid var(--danger); margin-bottom: 20px;">
+            <div class="table-header" style="border-bottom-color: var(--danger);">
+                <h4 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> ALERTA SOS ATIVO!</h4>
             </div>
-            
+            <div style="padding: 16px 24px;">
+                <p>Paciente acionou o botão de emergência.</p>
+                <div id="mapa-sos" style="height: 250px; border-radius: 8px; margin: 12px 0;"></div>
+                <button id="btn-resolver-sos" class="btn-success" style="width: 100%; padding: 12px;">
+                    <i class="fa-solid fa-check-circle"></i> Marcar como Resolvido
+                </button>
+            </div>
+        </div>
+
+        <!-- Permissões -->
+        <div class="table-card" style="margin-bottom: 20px;">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-user-shield"></i> Compartilhamento com Terapeuta</h4>
+            </div>
+            <div style="padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>Compartilhar dados</strong>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Autoriza o terapeuta a ver históricos e relatórios.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-permissao">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Lista de Pacientes -->
+        <div class="table-card">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-users"></i> Meus Pacientes</h4>
+            </div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Nome</th>
+                            <th>Paciente</th>
                             <th>Status</th>
                             <th>Próxima Medicação</th>
                             <th>Ações</th>
@@ -129,75 +113,19 @@
                     </thead>
                     <tbody id="lista-pacientes">
                         <tr>
-                            <td><strong>Paciente Exemplo</strong></td>
-                            <td><span class="status-badge active">Estável</span></td>
-                            <td>14:00 - Paracetamol</td>
-                            <td>
-                                <button class="btn-icon" title="Ver Detalhes"><i class="fa-solid fa-eye"></i></button>
-                                <button class="btn-icon" title="Registrar Rotina"><i class="fa-solid fa-notes-medical"></i></button>
+                            <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                Carregando pacientes...
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
+
     </main>
-
-    <!-- Modal Detalhes do Paciente -->
-    <div id="modal-detalhes-paciente" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
-        <div style="background: white; padding: 25px; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
-            <button onclick="fecharModalDetalhes()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            <h3 style="margin-top: 0; color: var(--primary-dark);"><i class="fa-solid fa-user-clock"></i> Detalhes do Paciente</h3>
-            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-            
-            <div id="conteudo-detalhes-paciente">
-                <p>Carregando informações...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Unificado: Registrar Rotina do Paciente -->
-    <div id="modal-registrar-rotina" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1100;">
-        <div style="background: white; padding: 25px; border-radius: 16px; max-width: 550px; width: 90%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-            <button onclick="fecharModalRotina()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            
-            <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 1.3rem;">
-                <i class="fa-solid fa-calendar-plus"></i> Registrar Rotina do Paciente
-            </h3>
-            <p id="rotina-paciente-nome" style="color: var(--text-sub); margin-bottom: 15px; font-weight: 600;"></p>
-            <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #e2e8f0;">
-
-            <form id="form-registrar-rotina" onsubmit="salvarRotinaNoBanco(event)" style="display: flex; flex-direction: column; gap: 15px;">
-                <input type="hidden" id="rotina-paciente-id">
-
-                <!-- 1. Tarefa da Rotina -->
-                <div>
-                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Descrição da Tarefa / Atividade</label>
-                    <input type="text" id="rotina-titulo" placeholder="Ex: Tomar remédio das 14h / Fazer caminhada" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
-                </div>
-
-                <!-- 2. Próxima Medicação -->
-                <div>
-                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Próxima Medicação</label>
-                    <input type="text" id="rotina-medicacao" placeholder="Ex: Paracetamol 500mg - 14:00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
-                </div>
-
-                <!-- 3. Upload da Imagem -->
-                <div>
-                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Anexar Foto da Tarefa / Remédio (Opcional)</label>
-                    <input type="file" id="rotina-foto" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 8px;">
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                    <button type="button" onclick="fecharModalRotina()" style="padding: 10px 18px; border: 1px solid #ccc; background: #f8fafc; border-radius: 8px; cursor: pointer;">Cancelar</button>
-                    <button type="submit" class="btn-primary" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Salvar no Banco
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="../js/cuidador.js"></script>
+    <script src="../js/auth.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/cuidador.js"></script>
+    
 </body>
 </html>

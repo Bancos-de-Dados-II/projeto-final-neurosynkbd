@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import Terapeuta from '../model/terapeuta.js';
 
-export async function cadastrarTerapeuta(req: Request, res: Response): Promise<void> {
+export async function cadastrarTerapeuta(req: Request, res: Response) {
     try {
         const { usuarioId, crefito } = req.body;
 
@@ -24,7 +24,7 @@ export async function cadastrarTerapeuta(req: Request, res: Response): Promise<v
     }
 }
 
-export async function obterTerapeutaPorUsuarioId(req: Request, res: Response): Promise<void> {
+export async function obterTerapeutaPorUsuarioId(req: Request, res: Response) {
     try {
         const { usuarioId } = req.params;
 

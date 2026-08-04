@@ -3,185 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neurosync - Dashboard Médico</title>
+    <title>NeuroSync - Médico/Terapeuta</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/medico.css">
 </head>
-<body>
+<body class="dashboard-body">
 
     <header class="navbar">
         <div class="brand">
             <i class="fa-solid fa-brain logo-icon"></i>
-            <span>Neurosync</span>
-            <span class="role-badge">Painel Médico</span>
+            <span>NeuroSync</span>
+            <span class="role-badge" id="role-badge">Médico</span>
         </div>
         <div class="nav-user">
             <span class="user-greeting" id="user-name">
-                <i class="fa-regular fa-circle-user"></i> Olá, Doutor(a)
+                <i class="fa-regular fa-circle-user"></i> Olá
             </span>
-            <button id="btn-logout" type="button" class="btn-sair">Sair</button>
+            <button id="btn-logout" class="btn-sair">Sair</button>
         </div>
     </header>
 
-    <main class="container">
-        
-        <section class="welcome-card">
+    <main class="dashboard-container">
+
+        <!-- Welcome -->
+        <div class="welcome-section">
             <div>
-                <h1>Acompanhamento Clínico 👋</h1>
-                <p>Gerencie laudos, acompanhe relatórios e ajuste tratamentos dos seus pacientes.</p>
+                <h3>Painel Clínico</h3>
+                <p>Gerencie diagnósticos, acompanhe relatórios e ajuste tratamentos dos seus pacientes.</p>
             </div>
-            <button type="button" class="btn-novo-diag" id="btn-novo-diagnostico">
+            <button id="btn-novo-diagnostico" class="btn-primary" style="white-space: nowrap;">
                 <i class="fa-solid fa-plus"></i> Novo Diagnóstico
             </button>
-        </section>
+        </div>
 
-        <section class="stats-grid">
-            <article class="card stat-card">
-                <div class="stat-icon icon-green">
-                    <i class="fa-solid fa-hospital-user"></i>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fa-solid fa-hospital-user icon-blue"></i>
+                <div>
+                    <h4 id="count-pacientes">0</h4>
+                    <p>Pacientes</p>
                 </div>
-                <div class="stat-info">
-                    <h2 id="count-pacientes">0</h2>
-                    <p>Pacientes sob Cuidado</p>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-clipboard-check icon-green"></i>
+                <div>
+                    <h4 id="count-diagnosticos">0</h4>
+                    <p>Diagnósticos</p>
                 </div>
-            </article>
+            </div>
+            <div class="stat-card">
+                <i class="fa-solid fa-triangle-exclamation icon-orange"></i>
+                <div>
+                    <h4 id="count-ocorrencias">0</h4>
+                    <p>Ocorrências</p>
+                </div>
+            </div>
+        </div>
 
-            <article class="card stat-card">
-                <div class="stat-icon icon-blue">
-                    <i class="fa-solid fa-clipboard-check"></i>
-                </div>
-                <div class="stat-info">
-                    <h2>--</h2>
-                    <p>Laudos Atualizados</p>
-                </div>
-            </article>
+        <!-- Vincular Paciente -->
+        <div class="table-card" style="margin-bottom: 20px;">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-user-plus"></i> Vincular Paciente ao Meu Painel</h4>
+            </div>
+            <div style="padding: 16px 24px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="email" id="email-paciente-vincular" placeholder="Digite o e-mail do paciente" style="
+                    padding: 10px 14px;
+                    border: 2px solid var(--border);
+                    border-radius: 6px;
+                    outline: none;
+                    flex: 1;
+                    min-width: 200px;
+                    font-size: 14px;
+                ">
+                <button id="btn-vincular-paciente" class="btn-primary" style="white-space: nowrap;">
+                    <i class="fa-solid fa-link"></i> Vincular ao Meu Painel
+                </button>
+                <span style="font-size: 12px; color: var(--text-secondary);">
+                    <i class="fa-solid fa-info-circle"></i> Apenas pacientes já cadastrados
+                </span>
+            </div>
+        </div>
 
-            <article class="card stat-card">
-                <div class="stat-icon icon-orange">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <div class="stat-info">
-                    <h2>0</h2>
-                    <p>Ocorrências Recentes</p>
-                </div>
-            </article>
-        </section>
-
-        <section class="card">
-            <h2 class="card-title">
-                <i class="fa-solid fa-bed-pulse" style="color: var(--primary-dark);"></i> 
-                Lista de Pacientes
-            </h2>
-            
+        <!-- Lista de Pacientes -->
+        <div class="table-card">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-bed-pulse"></i> Meus Pacientes</h4>
+                <span style="font-size: 13px; color: var(--text-secondary);">
+                    <i class="fa-solid fa-users"></i> <span id="count-pacientes-tabela">0</span> pacientes
+                </span>
+            </div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th scope="col">Paciente</th>
-                            <th scope="col">Diagnóstico Base</th>
-                            <th scope="col">Última Revisão</th>
-                            <th scope="col">Ações Clínicas</th>
+                            <th>Paciente</th>
+                            <th>Diagnóstico</th>
+                            <th>Status</th>
+                            <th>Última Revisão</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="lista-pacientes-medico">
                         <tr>
-                            <td colspan="4" style="text-align: center; color: var(--text-sub); padding: 20px;">
-                                Carregando lista de pacientes...
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; display: block; margin-bottom: 12px;"></i>
+                                Carregando pacientes...
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
 
     </main>
 
+    <!-- ============================================================ -->
+    <!-- MODAL DIAGNÓSTICO -->
+    <!-- ============================================================ -->
+    <div id="modal-diagnostico" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="fecharModal('modal-diagnostico')">&times;</button>
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-notes-medical"></i> Diagnóstico</h2>
+                <p>Registre ou atualize o diagnóstico do paciente.</p>
+            </div>
+            <form id="form-diagnostico" onsubmit="salvarDiagnostico(event)">
+                <div class="form-group">
+                    <label>Paciente</label>
+                    <select id="select-paciente" required>
+                        <option value="">-- Selecione um paciente --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Diagnóstico</label>
+                    <textarea id="input-diagnostico" rows="4" placeholder="Digite o diagnóstico detalhado..." required style="
+                        padding: 10px;
+                        border: 2px solid var(--border);
+                        border-radius: 8px;
+                        resize: vertical;
+                        font-family: inherit;
+                        width: 100%;
+                    "></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Observações (opcional)</label>
+                    <textarea id="input-observacoes" rows="2" placeholder="Observações adicionais..." style="
+                        padding: 10px;
+                        border: 2px solid var(--border);
+                        border-radius: 8px;
+                        resize: vertical;
+                        font-family: inherit;
+                        width: 100%;
+                    "></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-full">
+                    <i class="fa-solid fa-save"></i> Salvar Diagnóstico
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-status" class="modal-overlay">
+        <div class="modal-card" style="max-width: 450px;">
+            <button class="modal-close" onclick="fecharModal('modal-status')">&times;</button>
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-heart-pulse"></i> Alterar Status</h2>
+                <p id="status-paciente-nome">Paciente: <strong>Carregando...</strong></p>
+            </div>
+            <form id="form-status" onsubmit="salvarStatus(event)">
+                <div class="form-group">
+                    <label>Status do Paciente</label>
+                    <select id="select-status" required style="
+                        padding: 10px 14px;
+                        border: 2px solid var(--border);
+                        border-radius: 8px;
+                        width: 100%;
+                        font-size: 14px;
+                    ">
+                        <option value="Ativo">✅ Ativo</option>
+                        <option value="Em observação">🔍 Em observação</option>
+                        <option value="Internado">🏥 Internado</option>
+                        <option value="Alta">✅ Alta</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button type="button" onclick="fecharModal('modal-status')" style="
+                        flex: 1;
+                        padding: 10px;
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        background: transparent;
+                        cursor: pointer;
+                    ">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary" style="flex: 2;">
+                        <i class="fa-solid fa-save"></i> Salvar Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================================ -->
+    <script src="../js/auth.js"></script>
     <script src="../js/medico.js"></script>
-    <script>
-        function escapeHTML(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const role = (localStorage.getItem('userRole') || '').toLowerCase();
-            
-            if (!role || (role !== 'terapeuta' && role !== 'medico')) {
-                alert('Acesso não autorizado!');
-                window.location.href = '../index.html';
-                return;
-            }
-
-            const btnNovoDiag = document.getElementById('btn-novo-diagnostico');
-            if (btnNovoDiag) {
-                btnNovoDiag.addEventListener('click', () => {
-                    alert('Em breve: Novo diagnóstico');
-                });
-            }
-
-            const nomeElemento = document.getElementById('user-name');
-            if (nomeElemento) {
-                const nomeUsuario = localStorage.getItem('userName') || 'Doutor(a)';
-                nomeElemento.innerHTML = `<i class="fa-regular fa-circle-user"></i> Olá, ${escapeHTML(nomeUsuario)}`;
-            }
-
-            const btnLogout = document.getElementById('btn-logout');
-            if (btnLogout) {
-                btnLogout.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.href = '../index.html';
-                });
-            }
-
-            try {
-                const response = await fetch('/usuarios');
-                if (response.ok) {
-                    const usuarios = await response.json();
-                    const pacientes = usuarios.filter(u => u.tipo_usuario === 'PACIENTE');
-
-                    const countEl = document.getElementById('count-pacientes');
-                    if (countEl) countEl.textContent = pacientes.length;
-
-                    const tbody = document.getElementById('lista-pacientes-medico');
-                    if (tbody) {
-                        if (pacientes.length === 0) {
-                            tbody.innerHTML = `
-                                <tr>
-                                    <td colspan="4" style="text-align: center; color: var(--text-sub); padding: 20px;">
-                                        Nenhum paciente cadastrado até o momento.
-                                    </td>
-                                </tr>`;
-                        } else {
-                            tbody.innerHTML = pacientes.map(p => {
-                                const nome = escapeHTML(p.nome || p.email);
-                                const diagnostico = escapeHTML(p.diagnostico || 'Em acompanhamento');
-                                const ultimaRevisao = escapeHTML(p.ultima_revisao || 'Hoje');
-                                
-                                return `
-                                    <tr>
-                                        <td><strong>${nome}</strong></td>
-                                        <td>${diagnostico}</td>
-                                        <td>${ultimaRevisao}</td>
-                                        <td>
-                                            <button type="button" class="btn-acao" onclick="alert('Ver prontuário de ${nome.replace(/'/g, "\\'")}')">
-                                                📄 Prontuário
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('');
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error('❌ Erro ao carregar dados do dashboard:', err);
-            }
-        });
-    </script>
 </body>
 </html>

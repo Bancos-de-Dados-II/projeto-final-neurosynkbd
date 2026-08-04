@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import BotaoToTravado from '../model/BotaoToTravado.js';
 import TarefaVisual from '../model/tarefa_Visual.js';
 
-export async function registrarTravamento(req: Request, res: Response): Promise<void> {
+export async function registrarTravamento(req: Request, res: Response) {
     try {
         const { pacienteId, tarefaId } = req.body;
         
@@ -17,7 +17,7 @@ export async function registrarTravamento(req: Request, res: Response): Promise<
     }
 }
 
-export async function obterHistoricoTravamentos(req: Request, res: Response): Promise<void> {
+export async function obterHistoricoTravamentos(req: Request, res: Response) {
     try {
         const { pacienteId } = req.params;
         

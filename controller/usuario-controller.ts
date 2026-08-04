@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { UsuarioMongo } from '../model/usuarioMongo.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import usuarioService from '../service/usuarioService.js';
 
 export const buscarPacientePorId = async (req: Request, res: Response) => {
   try {
@@ -30,16 +32,19 @@ export const buscarPacientePorId = async (req: Request, res: Response) => {
   }
 };
 
-export async function criarUsuario(req: Request, res: Response): Promise<Response | void> {
+export async function criarUsuario(req: Request, res: Response) {
   try {
-    const { nome, email, senha, tipo_usuario, latitude, longitude } = req.body;
-    if (!nome || !email || !senha || !tipo_usuario) {
-      return res.status(400).json({ error: "Nome, e-mail, senha e tipo de usuário são obrigatórios." });
-    }
+    console.log('📥 Body recebido:', req.body);
+    console.log('📥 Headers:', req.headers);
 
-    const usuarioExistente = await UsuarioMongo.findOne({ email });
-    if (usuarioExistente) {
-      return res.status(400).json({ error: "Este e-mail já está cadastrado." });
+    const { nome, email, senha, tipo_usuario, latitude, longitude } = req.body;
+  
+    if (!nome || !email || !senha || !tipo_usuario) {
+      console.log('❌ Campos faltando:', { nome, email, senha, tipo_usuario });
+      return res.status(400).json({ 
+        error: "Nome, e-mail, senha e tipo de usuário são obrigatórios.",
+        recebido: req.body 
+      });
     }
 
     const latFinal = latitude ? parseFloat(latitude) : -15.7801;
@@ -77,13 +82,12 @@ export async function criarUsuario(req: Request, res: Response): Promise<Respons
     return res.status(500).json({ error: error.message });
   }
 }
-export async function getUsuarios(req: Request, res: Response): Promise<void> {
+export async function getUsuarios(req: Request, res: Response){
     try {
         const { tipo } = req.query;
         const filtro: any = {};
 
         if (tipo) {
-            // Usa Regex com 'i' para encontrar 'Paciente', 'PACIENTE', 'paciente', etc.
             filtro.tipo_usuario = { $regex: new RegExp(`^${tipo}$`, 'i') };
         }
 
@@ -95,7 +99,7 @@ export async function getUsuarios(req: Request, res: Response): Promise<void> {
     }
 }
 
-export async function getUsuarioById(req: Request, res: Response): Promise<Response | void> {
+export async function getUsuarioById(req: Request, res: Response) {
     try {
         const { id } = req.params;
         const usuario = await UsuarioMongo.findById(id).select('-senha');
@@ -109,7 +113,7 @@ export async function getUsuarioById(req: Request, res: Response): Promise<Respo
     }
 }
 
-export async function atualizarUsuario(req: Request, res: Response): Promise<Response | void> {
+export async function atualizarUsuario(req: Request, res: Response) {
     try {
         const { id } = req.params;
         const { nome, tipo_usuario, senha } = req.body;
@@ -140,7 +144,7 @@ export async function atualizarUsuario(req: Request, res: Response): Promise<Res
     }
 }
 
-export async function deletarUsuario(req: Request, res: Response): Promise<Response | void> {
+export async function deletarUsuario(req: Request, res: Response) {
     try {
         const { id } = req.params;
         const usuarioDeletado = await UsuarioMongo.findByIdAndDelete(id);
@@ -157,38 +161,17 @@ export async function deletarUsuario(req: Request, res: Response): Promise<Respo
     }
 }
 
-export async function loginUsuario(req: Request, res: Response): Promise<Response | void> {
+export async function loginUsuario(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, senha } = req.body;
-
-        if (!email || !senha) {
-            return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
-        }
-        
-        const usuario = await UsuarioMongo.findOne({ email });
-        if (!usuario || !usuario.senha) {
-            return res.status(401).json({ error: "E-mail ou senha incorretos." });
-        }
-        const senhaValida = await bcrypt.compare(senha, usuario.senha!);
-        if (!senhaValida) {
-            return res.status(401).json({ error: "E-mail ou senha incorretos." });
-        }
-
-        const resposta: any = usuario.toObject();
-        delete resposta.senha;
-
-        const role = resposta.tipo_usuario || resposta.tipo || '';
+        const resultado = await usuarioService.login(email, senha);
 
         return res.status(200).json({
             message: "Login realizado com sucesso!",
-            usuario: resposta,
-            userRole: role,
-            tipo_usuario: role,
-            userName: resposta.nome
+            ...resultado
         });
-
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message });
+    } catch (error) {
+        next(error); 
     }
 }
 export const vincularPaciente = async (req: Request, res: Response) => {
@@ -219,5 +202,180 @@ export const vincularPaciente = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("--> Erro no catch:", error);
     return res.status(500).json({ mensagem: 'Erro ao vincular paciente.', erro: error.message });
+  }
+};
+export const getMeusPacientes = async (req: Request, res: Response) => {
+    try {
+        const cuidadorId = req.user._id; 
+        
+        console.log('🔍 Buscando pacientes do cuidador:', cuidadorId);
+        const cuidador = await UsuarioMongo.findById(cuidadorId)
+            .populate('pacientesVinculados')
+            .select('pacientesVinculados');
+        
+        if (!cuidador) {
+            return res.status(404).json({ mensagem: 'Cuidador não encontrado.' });
+        }
+
+        const pacientes = cuidador.pacientesVinculados || [];
+        console.log(`✅ ${pacientes.length} pacientes encontrados`);
+
+        return res.status(200).json(pacientes);
+    } catch (error) {
+        console.error('Erro ao buscar pacientes do cuidador:', error);
+        return res.status(500).json({ mensagem: 'Erro interno do servidor.' });
+    }
+};
+
+export const vincularPacienteAoMedico = async (req: Request, res: Response) => {
+  try {
+    const { idMedico, emailPaciente } = req.body;
+    
+    console.log('📤 Vinculando paciente ao médico:', { idMedico, emailPaciente });
+
+    if (!idMedico || !emailPaciente) {
+      return res.status(400).json({ 
+        mensagem: 'ID do médico e e-mail do paciente são obrigatórios.' 
+      });
+    }
+    const medico = await UsuarioMongo.findById(idMedico);
+    if (!medico) {
+      return res.status(404).json({ mensagem: 'Médico/Terapeuta não encontrado.' });
+    }
+
+    const tipoMedico = medico.tipo_usuario?.toLowerCase();
+    if (tipoMedico !== 'medico' && tipoMedico !== 'terapeuta') {
+      return res.status(400).json({ 
+        mensagem: 'O usuário não é um médico ou terapeuta.' 
+      });
+    }
+
+    const paciente = await UsuarioMongo.findOne({ email: emailPaciente });
+    if (!paciente) {
+      return res.status(404).json({ mensagem: 'Paciente não encontrado com este e-mail.' });
+    }
+
+    // Verifica se o usuário é paciente
+    if ((paciente.tipo_usuario || '').toLowerCase() !== 'paciente') {
+      return res.status(400).json({ 
+        mensagem: 'O usuário com este e-mail não é um paciente.' 
+      });
+    }
+    if (medico.pacientesVinculados?.includes(paciente._id as any)) {
+      return res.status(400).json({ 
+        mensagem: 'Este paciente já está vinculado a este médico.' 
+      });
+    }
+    const medicoAtualizado = await UsuarioMongo.findByIdAndUpdate(
+      idMedico,
+      {
+        $addToSet: { pacientesVinculados: paciente._id }
+      },
+      { new: true }
+    ).populate('pacientesVinculados');
+
+    return res.status(200).json({
+      mensagem: 'Paciente vinculado ao médico com sucesso!',
+      medico: {
+        id: medicoAtualizado?._id,
+        nome: medicoAtualizado?.nome,
+        pacientes: medicoAtualizado?.pacientesVinculados || []
+      },
+      paciente: { 
+        id: paciente._id, 
+        nome: paciente.nome, 
+        email: paciente.email 
+      }
+    });
+
+  } catch (error: any) {
+    console.error('❌ Erro ao vincular paciente ao médico:', error);
+    return res.status(500).json({ 
+      mensagem: 'Erro ao vincular paciente.', 
+      erro: error.message 
+    });
+  }
+};
+
+export const getMeusPacientesMedico = async (req: Request, res: Response) => {
+  try {
+    const medicoId = req.user._id;
+    
+    console.log(' Buscando pacientes do médico:', medicoId);
+    
+    const medico = await UsuarioMongo.findById(medicoId)
+      .populate('pacientesVinculados')
+      .select('pacientesVinculados nome');
+    
+    if (!medico) {
+      return res.status(404).json({ mensagem: 'Médico não encontrado.' });
+    }
+
+    const pacientes = medico.pacientesVinculados || [];
+    console.log(`✅ ${pacientes.length} pacientes vinculados ao médico`);
+
+    return res.status(200).json({
+      medico: {
+        id: medico._id,
+        nome: medico.nome
+      },
+      pacientes: pacientes
+    });
+  } catch (error: any) {
+    console.error('❌ Erro ao buscar pacientes do médico:', error);
+    return res.status(500).json({ 
+      mensagem: 'Erro ao buscar pacientes.', 
+      erro: error.message 
+    });
+  }
+};
+export const atualizarStatusPaciente = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const statusValidos = ['Ativo', 'Em observação', 'Internado', 'Alta'];
+    
+    if (!status) {
+      return res.status(400).json({ 
+        mensagem: 'Status é obrigatório.' 
+      });
+    }
+
+    if (!statusValidos.includes(status)) {
+      return res.status(400).json({ 
+        mensagem: 'Status inválido. Use: ' + statusValidos.join(', ') 
+      });
+    }
+
+    const paciente = await UsuarioMongo.findById(id);
+    if (!paciente) {
+      return res.status(404).json({ mensagem: 'Paciente não encontrado.' });
+    }
+    if ((paciente.tipo_usuario || '').toLowerCase() !== 'paciente') {
+      return res.status(400).json({ 
+        mensagem: 'O usuário não é um paciente.' 
+      });
+    }
+    paciente.status = status;
+    await paciente.save();
+
+    console.log(`✅ Status do paciente ${paciente.nome} atualizado para: ${status}`);
+
+    return res.status(200).json({
+      mensagem: 'Status do paciente atualizado com sucesso!',
+      paciente: {
+        id: paciente._id,
+        nome: paciente.nome,
+        email: paciente.email,
+        status: paciente.status
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Erro ao atualizar status:', error);
+    return res.status(500).json({ 
+      mensagem: 'Erro ao atualizar status.', 
+      erro: error.message 
+    });
   }
 };

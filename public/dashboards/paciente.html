@@ -1,283 +1,61 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroSync - Minha Rotina</title>
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/paciente.css">
+    <title>NeuroSync - Paciente</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="dashboard-body">
 
-  <header class="navbar">
+    <header class="navbar">
         <div class="brand">
             <i class="fa-solid fa-brain logo-icon"></i>
-            <span>Neurosync</span>
-            <span class="role-badge">Painel Paciente</span>
+            <span>NeuroSync</span>
+            <span class="role-badge">Paciente</span>
         </div>
         <div class="nav-user">
             <span class="user-greeting" id="user-name">
                 <i class="fa-regular fa-circle-user"></i> Olá
             </span>
-            <button id="btn-logout" type="button" class="btn-sair">Sair</button>
+            <button id="btn-logout" class="btn-sair">Sair</button>
         </div>
     </header>
 
-    <div class="card" style="margin-bottom: 20px;">
-    <h3 style="color: var(--primary-dark); font-size: 1.1rem; margin-bottom: 10px;">
-        <i class="fa-solid fa-user-nurse"></i> Meu Cuidador Responsável
-    </h3>
-    <div id="info-cuidador">
-        <p style="color: var(--text-sub);">Carregando informações do cuidador do banco de dados...</p>
-    </div>
-</div>
-    <!-- Conteúdo Principal -->
-    <div class="main-container">
-        <div class="header-title">
-            <h1>Minha Rotina</h1>
-            <p>Hoje, Segunda-feira</p>
-        </div>
+    <main class="dashboard-container">
 
-        <div class="tasks-list" id="tasks-container">
-            <!-- As tarefas serão renderizadas via JS -->
-        </div>
-    </div>
-
-    <!-- Modal Tô Travado (Passo a Passo) -->
-    <div class="modal-overlay" id="modal-travado">
-        <div class="modal-card">
-            <button class="modal-close" onclick="fecharModal()">&times;</button>
-            <div class="modal-header">
-                <h2>Vamos devagar</h2>
-                <p id="modal-task-name">Nome da Tarefa</p>
+        <!-- Card do Cuidador -->
+        <div class="table-card" style="margin-bottom: 20px;">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-user-nurse"></i> Meu Cuidador</h4>
             </div>
-
-            <div class="progress-bar-container">
-                <div class="progress-info">
-                    <span id="progress-step-text">Passo 1 de 3</span>
-                    <span id="progress-percent-text">33%</span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
+            <div style="padding: 16px 24px;" id="info-cuidador">
+                <p style="color: var(--text-secondary);">Carregando informações...</p>
             </div>
-
-            <img id="modal-step-img" src="" alt="Imagem do passo" class="step-image">
-
-            <div class="step-heading" id="modal-step-title">Título do Passo</div>
-
-            <ul class="steps-list" id="modal-steps-list">
-                <!-- Passos renderizados dinamicamente -->
-            </ul>
-
-            <button class="btn-modal-next" onclick="avancarPasso()">
-                Próximo passo ➔
-            </button>
         </div>
-    </div>
-    <div class="sos-toast" id="sos-toast">
-        SOS enviado! Seu cuidador foi notificado.
-    </div>
-    <button class="sos-btn" onclick="dispararSOS()">SOS!</button>
 
-    <script>
-    // 1. Logout
-    const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            localStorage.clear();
-            window.location.href = '../index.html';
-        });
-    }
+        <!-- Minha Rotina -->
+        <div class="table-card">
+            <div class="table-header">
+                <h4><i class="fa-solid fa-list-check"></i> Minha Rotina</h4>
+            </div>
+            <div style="padding: 16px 24px;" id="tasks-container">
+                <p style="color: var(--text-secondary); text-align: center;">Carregando tarefas...</p>
+            </div>
+        </div>
 
-    // 2. Carregar Informações do Cuidador no Card Superior
-    async function carregarInfoCuidador(pacienteId) {
-        const elCuidador = document.getElementById('info-cuidador');
-        if (!elCuidador) return;
+        <!-- Botão SOS -->
+        <button id="btn-sos" class="btn-primary btn-danger" style="position: fixed; bottom: 30px; right: 30px; padding: 16px 24px; font-size: 18px; border-radius: 50px; box-shadow: var(--shadow-lg); z-index: 50;">
+            <i class="fa-solid fa-triangle-exclamation"></i> SOS
+        </button>
 
-        try {
-            const res = await fetch(`/api/pacientes/perfil/${pacienteId}`);
-            if (res.ok) {
-                const dados = await res.json();
-                if (dados.cuidador) {
-                    elCuidador.innerHTML = `
-                        <p style="margin: 0; color: #334155;"><strong>Nome:</strong> ${dados.cuidador.nome}</p>
-                        <p style="margin: 0; color: #64748b;"><strong>Email:</strong> ${dados.cuidador.email}</p>
-                    `;
-                } else {
-                    elCuidador.innerHTML = `<p style="color: #64748b;">Sem cuidador vinculado no momento.</p>`;
-                }
-            }
-        } catch (err) {
-            console.error("Erro ao buscar cuidador:", err);
-            elCuidador.innerHTML = `<p style="color: #ef4444;">Erro ao carregar dados do cuidador.</p>`;
-        }
-    }
+        <div id="sos-toast" style="display: none; position: fixed; bottom: 100px; right: 30px; background: var(--danger); color: white; padding: 12px 20px; border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 60;">
+            🚨 SOS enviado! Cuidador notificado.
+        </div>
 
-    async function carregarRotinasDoBanco() {
-        const pacienteId = localStorage.getItem('userId') || localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id');
-        const container = document.getElementById('tasks-container');
+    </main>
 
-        if (!pacienteId) {
-            console.warn('⚠️ ID do paciente não encontrado no localStorage.');
-            if (container) {
-                container.innerHTML = '<p style="text-align:center; color:#64748b;">Nenhum paciente identificado. Faça login novamente.</p>';
-            }
-            return;
-        }
-        carregarInfoCuidador(pacienteId);
-
-        try {
-            const response = await fetch(`/api/pacientes/${pacienteId}/rotinas`);
-
-            if (response.ok) {
-                const tarefas = await response.json();
-                console.log('✅ Rotinas do banco de dados:', tarefas);
-                renderizarRotinasReais(tarefas);
-            } else {
-                console.error('Erro na resposta da API de rotinas:', response.status);
-                if (container) {
-                    container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">Nenhuma tarefa cadastrada para você ainda.</p>';
-                }
-            }
-        } catch (error) {
-            console.error("❌ Erro ao carregar rotinas do banco:", error);
-            if (container) {
-                container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">Erro ao conectar com o servidor.</p>';
-            }
-        }
-    }
-    function renderizarRotinasReais(tarefas) {
-        const container = document.getElementById('tasks-container');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (!tarefas || tarefas.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">Nenhuma tarefa cadastrada para você ainda.</p>';
-            return;
-        }
-
-        tarefas.forEach(tarefa => {
-            const card = document.createElement('div');
-            card.className = 'task-card';
-            const titulo = tarefa.tituloTarefa || tarefa.descriçaoTarefa || 'Tarefa da Rotina';
-            const imagem = tarefa.imagem_Url || '../img/default-task.jpg';
-
-            card.innerHTML = `
-                <img src="${imagem}" alt="${titulo}" class="task-img" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px;">
-                <div class="task-content" style="padding: 12px 0;">
-                    <div class="task-title" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 12px; color: #1e293b;">${titulo}</div>
-                    <div class="task-actions" style="display: flex; gap: 10px;">
-                        <button class="btn-marcar" onclick="marcarFeito(this)" style="padding: 8px 16px; cursor: pointer; border-radius: 6px; border: none; background: #0284c7; color: #fff;">✓ Concluir</button>
-                        <button class="btn-to-travado" onclick="abrirToTravado('${titulo}')" style="padding: 8px 16px; cursor: pointer; border-radius: 6px; border: none; background: #e11d48; color: #fff;">Tô Travado</button>
-                    </div>
-                </div>
-            `;
-
-            container.appendChild(card);
-        });
-    }
-
-    function marcarFeito(btn) {
-        btn.innerText = '✓ Concluído!';
-        btn.style.backgroundColor = '#16a34a';
-        btn.style.color = '#ffffff';
-        btn.disabled = true;
-    }
-
-    function abrirToTravado(titulo) {
-        const elNome = document.getElementById('modal-task-name');
-        const modal = document.getElementById('modal-travado');
-        if (elNome) elNome.innerText = titulo;
-        if (modal) modal.style.display = 'flex';
-    }
-
-    function fecharModal() {
-        const modal = document.getElementById('modal-travado');
-        if (modal) modal.style.display = 'none';
-    }
-
-    // 7. Disparar SOS com GeoJSON (Exigência do Projeto)
-    // 7. Disparar SOS com GeoJSON + Campos Diretos do Backend
-    function dispararSOS() {
-        const pacienteId = localStorage.getItem('usuarioId') || localStorage.getItem('paciente_id') || localStorage.getItem('userId');
-        const toast = document.getElementById('sos-toast');
-
-        if (toast) {
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-
-                    const localizacaoGeoJSON = {
-                        type: "Point",
-                        coordinates: [lng, lat] // Longitude primeiro no GeoJSON
-                    };
-
-                    enviarAlertaSOS(pacienteId, localizacaoGeoJSON, lat, lng);
-                },
-                (error) => {
-                    console.warn('⚠️ Erro no GPS/Permissão, usando fallback:', error.message);
-                    
-                    // Fallback para teste caso GPS seja bloqueado
-                    const latFallback = -23.55052;
-                    const lngFallback = -46.633308;
-                    const fallbackGeoJSON = {
-                        type: "Point",
-                        coordinates: [lngFallback, latFallback]
-                    };
-
-                    enviarAlertaSOS(pacienteId, fallbackGeoJSON, latFallback, lngFallback);
-                }
-            );
-        } else {
-            alert('Geolocalização não é suportada neste navegador.');
-        }
-    }
-
-    async function enviarAlertaSOS(pacienteId, localizacaoGeoJSON, lat, lng) {
-    // 1. Atualiza o localStorage em tempo real para o cuidador.js exibir o mapa na Paraíba
-    const sosData = {
-        ativo: true,
-        lat: lat,
-        lng: lng,
-        pacienteId: pacienteId,
-        dataHora: new Date().toLocaleTimeString('pt-BR')
-    };
-    localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
-    console.log('📍 SOS salvo com sucesso no localStorage:', sosData);
-
-    // 2. Faz a chamada HTTP exatamente como o seu localizacao-router.ts e controller pedem
-    try {
-        const response = await fetch('/localizacao', {
-            method: 'PUT', // Método definido na linha 6 do localizacao-router.ts
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                usuarioId: pacienteId,  // Exigido pelo localizacao-controller.ts
-                latitude: lat,          // Exigido pelo localizacao-controller.ts
-                longitude: lng          // Exigido pelo localizacao-controller.ts
-            })
-        });
-
-        if (response.ok) {
-            const resultado = await response.json();
-            console.log('🚨 Geolocalização salva no MongoDB com sucesso!', resultado);
-        } else {
-            const errData = await response.json();
-            console.warn('⚠️ Resposta de erro do servidor:', errData);
-        }
-    } catch (err) {
-        console.error('❌ Erro na requisição de geolocalização:', err);
-    }
-}
-    document.addEventListener('DOMContentLoaded', carregarRotinasDoBanco);
-</script>
+    <script src="../js/paciente.js"></script>
 </body>
 </html>

@@ -10,7 +10,6 @@ function extrairIdDoParams(id: string | string[] | undefined): string | undefine
     return Array.isArray(id) ? id[0] : id;
 }
 
-// 1. UPLOAD DE FOTO E REGISTRO DA ROTINA + MEDICAÇÃO
 export async function salvarRotinaECarta(req: Request, res: Response) {
     try {
         const pacienteId = extrairIdDoParams(req.params.pacienteId);
@@ -50,7 +49,6 @@ export async function salvarRotinaECarta(req: Request, res: Response) {
     }
 }
 
-// 2. BUSCAR RELAÇÃO DE CUIDADOR/PACIENTE (MONGO)
 export async function buscarPerfilPacienteComCuidador(req: Request, res: Response) {
     try {
         const id = extrairIdDoParams(req.params.id);
@@ -77,38 +75,6 @@ export async function buscarPerfilPacienteComCuidador(req: Request, res: Respons
         return res.status(500).json({ error: "Erro ao buscar perfil: " + error.message });
     }
 }
-
-// 3. REGISTRAR SOS NO BANCO DE DADOS
-export async function registrarSosBanco(req: Request, res: Response) {
-    try {
-        const { pacienteId, latitude, longitude } = req.body;
-
-        if (!pacienteId || !latitude || !longitude) {
-            return res.status(400).json({ 
-                mensagem: 'pacienteId, latitude e longitude são obrigatórios.' 
-            });
-        }
-
-        const agora = new Date();
-        const sos = await (BotaoSos as any).create({
-            pacienteId,
-            latitude: String(latitude),
-            longitude: String(longitude),
-            data: agora.toISOString().split('T')[0],
-            hora: agora.toTimeString().split(' ')[0],
-            pushEnviado: false
-        });
-
-        return res.status(201).json({
-            mensagem: "SOS registrado com sucesso!",
-            sos
-        });
-    } catch (error: any) {
-        console.error("Erro ao registrar SOS:", error);
-        return res.status(500).json({ error: "Erro ao registrar SOS: " + error.message });
-    }
-}
-
 // 4. BUSCAR SOS ATIVO DO PACIENTE
 export async function buscarSosAtivo(req: Request, res: Response) {
     try {

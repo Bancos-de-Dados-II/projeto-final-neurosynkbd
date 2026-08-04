@@ -1,27 +1,47 @@
-import type { Request, Response } from 'express';
-import BotaoSos from '../model/BotaoSos.js';
+import type { Request, Response, NextFunction } from 'express';
+import botaoSosService from '../service/botaoSosService.js';
 
 export class BotaoSosController {
-  async registrarSos(req: Request, res: Response) {
+  async registrarSos(req: Request, res: Response, next: NextFunction) {
     try {
       const { pacienteId, latitude, longitude } = req.body;
-      const novoSos = await BotaoSos.create({ pacienteId, latitude, longitude });
-      return res.status(201).json({ mensagem: "Alerta SOS registrado com sucesso!", dados: novoSos });
+      
+      if (!pacienteId || !latitude || !longitude) {
+        return res.status(400).json({ 
+          mensagem: "pacienteId, latitude e longitude são obrigatórios." 
+        });
+      }
+      
+      const novoSos = await botaoSosService.registrarSos(pacienteId, latitude, longitude);
+      
+      return res.status(201).json({ 
+        mensagem: "Alerta SOS registrado com sucesso!", 
+        dados: novoSos 
+      });
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao registrar alerta SOS", error });
+      next(error);
     }
   }
 
-  async listarHistoricoPorPaciente(req: Request, res: Response) {
+  async listarHistoricoPorPaciente(req: Request, res: Response, next: NextFunction) {
     try {
-      const { pacienteId } = req.params;
-      const historico = await BotaoSos.findAll({
-        where: { pacienteId },
-        order: [['data', 'DESC'], ['hora', 'DESC']]
-      });
+      const pacienteIdParam = req.params.pacienteId;
+      const pacienteId = Array.isArray(pacienteIdParam) ? pacienteIdParam[0] : pacienteIdParam;
+      
+      console.log('📋 Buscando histórico SOS para paciente:', pacienteId);
+      
+      if (!pacienteId) {
+        return res.status(400).json({ mensagem: 'ID do paciente é obrigatório.' });
+      }
+      
+      const historico = await botaoSosService.listarHistoricoPorPaciente(pacienteId);
+      
+      console.log(`✅ ${historico.length} registros encontrados`);
+      
       return res.status(200).json(historico);
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao buscar histórico de SOS", error });
+      console.error('❌ Erro ao buscar histórico SOS:', error);
+      next(error);
     }
   }
 }

@@ -31,11 +31,11 @@ BotaoSos.init({
         defaultValue: DataTypes.UUIDV4
     },
     latitude: {
-        type: DataTypes.STRING,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     longitude: {
-        type: DataTypes.STRING,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     data: {

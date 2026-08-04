@@ -1,332 +1,651 @@
-// Proteção exclusiva para a página do Cuidador
-validarAcesso('CUIDADOR');
+// js/cuidador.js - VERSÃO COMPLETA CORRIGIDA
+// ============================================================
+// CUIDADOR - DASHBOARD
+// ============================================================
 
-function validarAcesso(roleEsperado) {
-    const role = (localStorage.getItem('userRole') || '').toUpperCase();
-    const nome = localStorage.getItem('userName');
+let map = null;
+let marker = null;
+let intervaloMonitoramento = null;
 
-    if (!role) {
-        window.location.href = '../index.html';
-        return;
+// ============================================================
+// VALIDAÇÃO DE ACESSO
+// ============================================================
+function validarAcessoCuidador() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('userRole') || '';
+    const userId = localStorage.getItem('userId') || localStorage.getItem('usuarioId');
+
+    console.log('🔍 Verificando acesso cuidador:', { token: !!token, role, userId });
+
+    if (!token) {
+        console.warn('❌ Token não encontrado');
+        alert('Faça login para acessar o sistema.');
+        window.location.href = '/index.html';
+        return false;
     }
 
-    if (role !== roleEsperado) {
-        alert('Acesso negado para o seu perfil!');
-        window.location.href = '../index.html';
-        return;
+    if (role.toLowerCase() !== 'cuidador') {
+        console.warn('❌ Role inválida:', role);
+        alert(`Acesso negado! Você é um(a) ${role}, não um cuidador.`);
+        window.location.href = '/index.html';
+        return false;
     }
 
-    const userNameElement = document.getElementById('user-name');
-    if (userNameElement) {
-        userNameElement.innerHTML = `<i class="fa-regular fa-circle-user"></i> Olá, ${nome || 'Cuidador'}`;
+    if (!userId) {
+        console.warn('❌ userId não encontrado');
+        alert('Erro: ID do usuário não encontrado. Faça login novamente.');
+        window.location.href = '/index.html';
+        return false;
     }
+
+    const nome = localStorage.getItem('userName') || 'Cuidador';
+    const el = document.getElementById('user-name');
+    if (el) {
+        el.innerHTML = `<i class="fa-regular fa-circle-user"></i> Olá, ${nome}`;
+    }
+
+    console.log('✅ Acesso validado para cuidador:', nome);
+    return true;
 }
 
-// Executa as verificações assim que a página carrega
+// ============================================================
+// FUNÇÃO DE LOGOUT DIRETA
+// ============================================================
+function fazerLogout() {
+    console.log('🔴 Fazendo logout...');
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('usuarioId');
+    localStorage.removeItem('paciente_id');
+    localStorage.removeItem('neurosync_sos_status');
+    
+    window.location.href = '/index.html';
+}
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    carregarPacientes();
-    configurarLogout();
-    checarStatusSOS();
-    setInterval(checarStatusSOS, 3000); // Roda o monitoramento a cada 3s
-});
-
-// ----------------------------------------------------
-// FUNCIONALIDADE 1: Buscar Pacientes Reais da API
-// ----------------------------------------------------
-async function carregarPacientes() {
-    const tabelaBody = document.getElementById('lista-pacientes');
-    const countElement = document.getElementById('count-pacientes');
-
-    try {
-        const response = await fetch('http://localhost:3000/usuarios?tipo=PACIENTE');
-        if (!response.ok) throw new Error('Erro ao buscar pacientes');
-        
-        const pacientes = await response.json();
-
-        if (countElement) {
-            countElement.textContent = pacientes.length || 0;
-        }
-
-        if (!pacientes || pacientes.length === 0) {
-            tabelaBody.innerHTML = `
-                <tr>
-                    <td colspan="4" style="text-align: center; color: #64748b;">
-                        Nenhum paciente cadastrado até o momento.
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        tabelaBody.innerHTML = pacientes.map(p => `
-            <tr>
-                <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.email || ''}</small></td>
-                <td><span class="status-badge active">Ativo</span></td>
-                <td>${p.proxima_medicacao || 'Sem medicação agendada'}</td>
-                <td>
-                    <button class="btn-icon" onclick="verDetalhes('${p._id || p.id}')" title="Ver Detalhes">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    <button class="btn-icon" onclick="abrirModalRotina('${p._id || p.id}', '${p.nome}')" title="Registrar Rotina">
-                        <i class="fa-solid fa-notes-medical"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-
-    } catch (error) {
-        console.error('Erro:', error);
-        if (tabelaBody) {
-            tabelaBody.innerHTML = `
-                <tr>
-                    <td colspan="4" style="text-align: center; color: #ef4444;">
-                        Erro ao carregar a lista de pacientes. Verifique a conexão com a API.
-                    </td>
-                </tr>`;
-        }
-    }
-}
-
-// ----------------------------------------------------
-// FUNCIONALIDADE 3: Ações dos Botões & Modais
-// ----------------------------------------------------
-async function vincularPaciente() {
-  const inputEmail = document.getElementById('email-paciente-input');
-  let email = inputEmail ? inputEmail.value.trim() : '';
-
-  if (!email) {
-    email = prompt("Digite o e-mail do paciente que deseja vincular:");
-  }
-
-  if (!email) {
-    alert('⚠️ Por favor, informe o e-mail do paciente.');
-    return;
-  }
-
-  const idCuidador = localStorage.getItem('usuarioId');
-
-  try {
-    const resposta = await fetch('/usuarios/vincular-paciente', { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailPaciente: email, idCuidador: idCuidador })
-    });
-
-    const dados = await resposta.json();
-    if (!resposta.ok) throw new Error(dados.mensagem || 'Erro ao vincular paciente');
-
-    alert(`✅ ${dados.mensagem}`);
-    if (inputEmail) inputEmail.value = '';
-    location.reload();
-
-  } catch (erro) {
-    alert(`❌ ${erro.message}`);
-  }
-}
-
-async function verDetalhes(idPaciente) {
-    const modal = document.getElementById('modal-detalhes-paciente');
-    const conteudo = document.getElementById('conteudo-detalhes-paciente');
+    console.log('📄 Página do cuidador carregada');
     
-    if (modal) modal.style.display = 'flex';
-    
-    try {
-        const response = await fetch(`/usuarios/paciente/${idPaciente}`);
-        if (!response.ok) throw new Error('Não foi possível carregar os detalhes.');
-        
-        const paciente = await response.json();
-        
-        conteudo.innerHTML = `
-            <p><strong>Nome:</strong> ${paciente.nome || 'Não informado'}</p>
-            <p><strong>E-mail:</strong> ${paciente.email || 'Não informado'}</p>
-            <p><strong>Diagnóstico Base:</strong> ${paciente.diagnostico || 'Nenhum laudo registrado'}</p>
-            <p><strong>Status:</strong> Ativo</p>
-        `;
-    } catch (err) {
-        conteudo.innerHTML = `<p style="color: red;">Erro ao carregar detalhes: ${err.message}</p>`;
-    }
-}
+    if (!validarAcessoCuidador()) return;
 
-function fecharModalDetalhes() {
-    const modal = document.getElementById('modal-detalhes-paciente');
-    if (modal) modal.style.display = 'none';
-}
-
-function configurarLogout() {
+    // ✅ BOTÃO LOGOUT
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            localStorage.clear();
-            window.location.href = '../index.html';
+        btnLogout.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔴 Botão de sair clicado!');
+            fazerLogout();
         });
+    }
+
+    // Botões
+    document.getElementById('btn-vincular')?.addEventListener('click', vincularPaciente);
+    document.getElementById('email-paciente-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') vincularPaciente();
+    });
+
+    document.getElementById('btn-resolver-sos')?.addEventListener('click', resolverSOS);
+
+    document.getElementById('toggle-permissao')?.addEventListener('change', (e) => {
+        alterarPermissao(e.target.checked);
+    });
+
+    // Carregar dados
+    carregarPacientes();
+    iniciarMonitoramentoSOS();
+});
+// js/cuidador.js - PARTE CORRIGIDA DO carregarPacientes
+
+// ============================================================
+// 1. CARREGAR PACIENTES DO CUIDADOR
+// ============================================================
+async function carregarPacientes() {
+    const tbody = document.getElementById('lista-pacientes');
+    const countEl = document.getElementById('count-pacientes');
+
+    if (!tbody) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        console.log('📤 Buscando pacientes do cuidador...');
+        
+        const response = await fetch('/usuarios/meus-pacientes', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        console.log('📥 Resposta:', response.status);
+        
+        if (response.ok) {
+            const pacientes = await response.json();
+            console.log('✅ Pacientes carregados:', pacientes.length);
+            
+            if (countEl) countEl.textContent = pacientes.length || 0;
+
+            if (!pacientes || pacientes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                            <i class="fa-regular fa-face-frown" style="font-size: 24px; display: block; margin-bottom: 8px;"></i>
+                            Nenhum paciente vinculado até o momento.
+                            <br><small>Use o campo acima para vincular um paciente.</small>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const medicacoes = pacientes.filter(p => p.proxima_medicacao).length;
+            document.getElementById('count-medicacoes').textContent = medicacoes || 0;
+
+            tbody.innerHTML = pacientes.map(p => {
+                const id = p._id || p.id;
+                const nome = p.nome || 'Paciente';
+                const email = p.email || '';
+                const medicacao = p.proxima_medicacao || 'Sem medicação';
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${nome}</strong>
+                            <br><small style="color: var(--text-secondary);">${email}</small>
+                        </td>
+                        <td>
+                            <span class="status-badge active">Ativo</span>
+                        </td>
+                        <td>${medicacao}</td>
+                        <td>
+                            <button class="btn-icon" onclick="verDetalhes('${id}')" title="Ver Detalhes">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button class="btn-icon" onclick="abrirModalRotina('${id}', '${nome}')" title="Registrar Rotina">
+                                <i class="fa-solid fa-notes-medical"></i>
+                            </button>
+                            <button class="btn-icon" onclick="verHistoricoSOS('${id}')" title="Histórico SOS">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+        } else if (response.status === 403) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--danger); padding: 20px;">
+                        ⚠️ Você não tem permissão para ver pacientes.
+                        <br><small>Verifique se você está logado como cuidador.</small>
+                    </td>
+                </tr>
+            `;
+        } else {
+            const erro = await response.json().catch(() => ({}));
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--danger); padding: 20px;">
+                        ❌ Erro ao carregar pacientes: ${erro.mensagem || 'Tente novamente.'}
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Erro ao carregar pacientes:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align: center; color: var(--danger); padding: 20px;">
+                    ❌ Erro de conexão ao carregar pacientes.
+                </td>
+            </tr>
+        `;
+    }
+}
+// ============================================================
+// 2. VINCULAR PACIENTE - CORRIGIDO
+// ============================================================
+async function vincularPaciente() {
+    const input = document.getElementById('email-paciente-input');
+    const email = input?.value?.trim();
+
+    if (!email) {
+        alert('⚠️ Digite o e-mail do paciente para vincular.');
+        return;
+    }
+
+    const idCuidador = localStorage.getItem('userId') || localStorage.getItem('usuarioId');
+
+    if (!idCuidador) {
+        alert('⚠️ ID do cuidador não encontrado. Faça login novamente.');
+        return;
+    }
+
+    console.log('📤 Vinculando paciente:', { idCuidador, emailPaciente: email });
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/usuarios/vincular-paciente', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                idCuidador: idCuidador,
+                emailPaciente: email
+            })
+        });
+
+        const dados = await response.json();
+        console.log('📥 Resposta do vínculo:', dados);
+
+        if (response.ok) {
+            alert('✅ ' + (dados.mensagem || 'Paciente vinculado com sucesso!'));
+            if (input) input.value = '';
+            carregarPacientes(); // Recarrega a lista
+        } else {
+            alert('❌ ' + (dados.mensagem || dados.erro || 'Erro ao vincular paciente.'));
+        }
+    } catch (error) {
+        console.error('Erro ao vincular:', error);
+        alert('❌ Erro de conexão ao vincular paciente.');
     }
 }
 
-function abrirModalRotina(idPaciente, nomePaciente) {
-    document.getElementById('rotina-paciente-id').value = idPaciente;
-    document.getElementById('rotina-paciente-nome').textContent = `Paciente: ${nomePaciente}`;
-    document.getElementById('form-registrar-rotina').reset();
+// ============================================================
+// 3. VER DETALHES DO PACIENTE
+// ============================================================
+window.verDetalhes = async function(idPaciente) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/usuarios/paciente/${idPaciente}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const paciente = await response.json();
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'modal-detalhes';
+            modal.innerHTML = `
+                <div class="modal-card">
+                    <button class="modal-close" onclick="fecharModal('modal-detalhes')">&times;</button>
+                    <div class="modal-header">
+                        <h2><i class="fa-solid fa-user"></i> Detalhes do Paciente</h2>
+                    </div>
+                    <div style="margin: 16px 0;">
+                        <p><strong>👤 Nome:</strong> ${paciente.nome || 'Não informado'}</p>
+                        <p><strong>📧 E-mail:</strong> ${paciente.email || 'Não informado'}</p>
+                        <p><strong>📋 Diagnóstico:</strong> ${paciente.diagnostico || 'Não informado'}</p>
+                        <p><strong>💊 Próxima Medicação:</strong> ${paciente.proxima_medicacao || 'Não informado'}</p>
+                        <p><strong>👨‍⚕️ Cuidador:</strong> ${paciente.cuidador?.nome || 'Não vinculado'}</p>
+                    </div>
+                    <button class="btn-primary btn-full" onclick="fecharModal('modal-detalhes')">Fechar</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        } else {
+            alert('❌ Erro ao buscar detalhes do paciente.');
+        }
+    } catch (error) {
+        console.error('Erro ao buscar detalhes:', error);
+        alert('Erro ao carregar detalhes do paciente.');
+    }
+};
 
-    const modal = document.getElementById('modal-registrar-rotina');
-    if (modal) modal.style.display = 'flex';
-}
+// ============================================================
+// 4. SALVAR ROTINA (UPLOAD)
+// ============================================================
+window.abrirModalRotina = function(idPaciente, nomePaciente) {
+    const existente = document.getElementById('modal-rotina');
+    if (existente) existente.remove();
 
-function fecharModalRotina() {
-    const modal = document.getElementById('modal-registrar-rotina');
-    if (modal) modal.style.display = 'none';
-}
+    const modal = document.createElement('div');
+    modal.id = 'modal-rotina';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-card">
+            <button class="modal-close" onclick="fecharModal('modal-rotina')">&times;</button>
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-calendar-plus"></i> Registrar Rotina</h2>
+                <p>Paciente: <strong>${nomePaciente}</strong></p>
+            </div>
+            <form id="form-rotina" onsubmit="salvarRotina(event, '${idPaciente}')">
+                <div class="form-group">
+                    <label>Título da Tarefa</label>
+                    <input type="text" id="rotina-titulo" placeholder="Ex: Tomar remédio" required>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="rotina-descricao" rows="2" placeholder="Detalhes da tarefa..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Próxima Medicação</label>
+                    <input type="text" id="rotina-medicacao" placeholder="Ex: Paracetamol 500mg - 14:00">
+                </div>
+                <div class="form-group">
+                    <label>Foto (opcional)</label>
+                    <input type="file" id="rotina-foto" accept="image/*">
+                </div>
+                <button type="submit" class="btn-primary btn-full">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Salvar Rotina
+                </button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
 
-async function salvarRotinaNoBanco(event) {
+window.salvarRotina = async function(event, idPaciente) {
     event.preventDefault();
 
-    const pacienteId = document.getElementById('rotina-paciente-id').value;
     const titulo = document.getElementById('rotina-titulo').value.trim();
+    const descricao = document.getElementById('rotina-descricao').value.trim();
     const medicacao = document.getElementById('rotina-medicacao').value.trim();
     const fileInput = document.getElementById('rotina-foto');
 
-    if (!pacienteId) {
-        alert('❌ ID do paciente inválido.');
+    if (!titulo) {
+        alert('⚠️ Digite o título da tarefa.');
         return;
     }
 
     const formData = new FormData();
     formData.append('titulo', titulo);
-    formData.append('descricao', titulo); 
+    formData.append('descricao', descricao || titulo);
     formData.append('proxima_medicacao', medicacao);
     if (fileInput.files.length > 0) {
         formData.append('foto', fileInput.files[0]);
     }
 
     try {
-        const response = await fetch(`/api/pacientes/${pacienteId}/rotina`, {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/pacientes/${idPaciente}/rotina`, {
             method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
             body: formData
         });
 
         const dados = await response.json();
 
         if (response.ok) {
-            alert('✅ Rotina e medicação cadastradas com sucesso!');
-            fecharModalRotina();
-            if (typeof carregarPacientes === 'function') carregarPacientes();
+            alert('✅ Rotina registrada com sucesso!');
+            fecharModal('modal-rotina');
+            carregarPacientes();
         } else {
-            alert('❌ Erro: ' + (dados.mensagem || dados.error || 'Verifique as informações.'));
+            alert('❌ Erro: ' + (dados.mensagem || dados.error || 'Tente novamente.'));
         }
-    } catch (err) {
-        console.error('Erro de conexão:', err);
+    } catch (error) {
+        console.error('Erro ao salvar rotina:', error);
         alert('❌ Erro de conexão ao salvar rotina.');
     }
+};
+
+window.verHistoricoSOS = async function(idPaciente) {
+    console.log('🔍 Buscando histórico SOS para paciente:', idPaciente);
+    
+    if (!idPaciente) {
+        alert('❌ ID do paciente não encontrado.');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        console.log('📤 Token:', token ? 'Presente' : 'Ausente');
+        
+        const response = await fetch(`/sos/historico/${idPaciente}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        console.log('📥 Resposta do histórico:', response.status);
+        
+        if (response.ok) {
+            const historico = await response.json();
+            console.log('✅ Histórico carregado:', historico.length, 'registros');
+            
+            // Remove modal existente
+            const modalExistente = document.getElementById('modal-historico');
+            if (modalExistente) modalExistente.remove();
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'modal-historico';
+            modal.innerHTML = `
+                <div class="modal-card" style="max-width: 700px;">
+                    <button class="modal-close" onclick="fecharModal('modal-historico')">&times;</button>
+                    <div class="modal-header">
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> Histórico SOS</h2>
+                        <p>Registros de alertas do paciente</p>
+                    </div>
+                    <div style="max-height: 350px; overflow-y: auto; margin: 16px 0;">
+                        ${historico.length === 0 ? `
+                            <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                                <i class="fa-regular fa-face-smile" style="font-size: 48px; display: block; margin-bottom: 12px;"></i>
+                                Nenhum registro SOS encontrado para este paciente.
+                            </div>
+                        ` : `
+                            <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: var(--background);">
+                                        <th style="padding: 10px; text-align: left;">Data</th>
+                                        <th style="padding: 10px; text-align: left;">Hora</th>
+                                        <th style="padding: 10px; text-align: left;">Localização</th>
+                                        <th style="padding: 10px; text-align: left;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${historico.map(item => `
+                                        <tr style="border-bottom: 1px solid var(--border);">
+                                            <td style="padding: 10px;">${item.data || '-'}</td>
+                                            <td style="padding: 10px;">${item.hora || '-'}</td>
+                                            <td style="padding: 10px; font-size: 12px;">
+                                                ${item.latitude ? `${item.latitude}, ${item.longitude}` : '-'}
+                                            </td>
+                                            <td style="padding: 10px;">
+                                                <span class="status-badge ${item.pushEnviado ? 'active' : 'pending'}">
+                                                    ${item.pushEnviado ? '✅ Enviado' : '⏳ Pendente'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `}
+                    </div>
+                    <button class="btn-primary btn-full" onclick="fecharModal('modal-historico')">
+                        <i class="fa-solid fa-xmark"></i> Fechar
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+        } else if (response.status === 403) {
+            alert('❌ Você não tem permissão para ver o histórico SOS deste paciente.');
+        } else if (response.status === 404) {
+            alert('❌ Nenhum registro SOS encontrado para este paciente.');
+        } else {
+            const erro = await response.json().catch(() => ({}));
+            alert('❌ Erro ao carregar histórico: ' + (erro.mensagem || erro.message || 'Tente novamente.'));
+        }
+    } catch (error) {
+        console.error('❌ Erro ao buscar histórico SOS:', error);
+        alert('❌ Erro de conexão ao carregar histórico SOS.');
+    }
+};
+// ============================================================
+// 6. MONITORAMENTO SOS (COM MAPA) - CORRIGIDO
+// ============================================================
+function iniciarMonitoramentoSOS() {
+    console.log('🔄 Iniciando monitoramento SOS...');
+    verificarSOS();
+    if (intervaloMonitoramento) clearInterval(intervaloMonitoramento);
+    intervaloMonitoramento = setInterval(verificarSOS, 10000); // ✅ 10 segundos
 }
 
-// =========================================================
-// MÓDULO CUIDADOR: MONITORAMENTO DE SOS E MAPA (LEAFLET)
-// =========================================================
-
-let map = null;
-let marker = null;
+async function verificarSOS() {
+    const cardAlerta = document.getElementById('card-alerta-sos');
+    if (!cardAlerta) return;
+    const hasPacientes = document.getElementById('lista-pacientes')?.children.length > 0;
+    
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('/localizacao', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const dados = await response.json();
+            
+            if (dados && dados.ativo) {
+                cardAlerta.style.display = 'block';
+                const lat = parseFloat(dados.latitude);
+                const lng = parseFloat(dados.longitude);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    inicializarMapa(lat, lng);
+                }
+                return;
+            } else {
+                cardAlerta.style.display = 'none';
+                if (map) {
+                    map.remove();
+                    map = null;
+                    marker = null;
+                }
+            }
+        } else if (response.status === 404) {
+            cardAlerta.style.display = 'none';
+            if (map) {
+                map.remove();
+                map = null;
+                marker = null;
+            }
+            localStorage.removeItem('neurosync_sos_status');
+        }
+    } catch (error) {
+        if (error.message !== 'Failed to fetch') {
+            console.warn('⚠️ Erro ao verificar SOS:', error.message);
+        }
+    }
+}
 
 function inicializarMapa(lat, lng) {
-  const containerMapa = document.getElementById('mapa-sos');
-  if (!containerMapa) return;
+    const container = document.getElementById('mapa-sos');
+    if (!container) return;
 
-  if (!map) {
-    map = L.map('mapa-sos').setView([lat, lng], 15);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    marker = L.marker([lat, lng]).addTo(map)
-      .bindPopup('📍 Paciente em emergência!')
-      .openPopup();
-  } else {
-    marker.setLatLng([lat, lng]);
-    map.setView([lat, lng], 15);
-  }
-
-  setTimeout(() => {
-    if (map) map.invalidateSize();
-  }, 300);
-}
-
-async function checarStatusSOS() {
-  const cardAlerta = document.getElementById('card-alerta-sos');
-
-  try {
-    const response = await fetch('/localizacao');
-    
-    if (response.ok) {
-      const sosData = await response.json();
-
-      if (sosData && sosData.ativo) {
-        if (cardAlerta) cardAlerta.style.display = 'block';
-
-        const lat = parseFloat(sosData.latitude);
-        const lng = parseFloat(sosData.longitude);
-
-        if (!isNaN(lat) && !isNaN(lng)) {
-          inicializarMapa(lat, lng);
-          return;
-        }
-      }
-    } else if (response.status === 404) {
-      // Se a API retornou 404, significa que o SOS foi resolvido/desativado no backend
-      if (cardAlerta) cardAlerta.style.display = 'none';
-      localStorage.removeItem('neurosync_sos_status');
-      return;
+    if (map) {
+        map.remove();
+        map = null;
+        marker = null;
     }
-  } catch (err) {
-    console.warn('Backend indisponível no momento.');
-  }
 
-  // Fallback apenas se não houver resposta do backend e houver item válido ativo no localStorage
-  const sosDataRaw = localStorage.getItem('neurosync_sos_status');
-  if (sosDataRaw) {
     try {
-      const sosData = JSON.parse(sosDataRaw);
+        map = L.map('mapa-sos').setView([lat, lng], 15);
 
-      if (sosData && sosData.ativo) {
-        if (cardAlerta) cardAlerta.style.display = 'block';
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        const lat = parseFloat(sosData.lat);
-        const lng = parseFloat(sosData.lng);
+        marker = L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map)
+            .bindPopup('📍 <strong>ALERTA!</strong><br>Paciente em emergência!')
+            .openPopup();
 
-        if (!isNaN(lat) && !isNaN(lng)) {
-          inicializarMapa(lat, lng);
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('Erro ao ler JSON de SOS do localStorage:', e);
+        setTimeout(() => { 
+            if (map) map.invalidateSize(); 
+        }, 300);
+    } catch (error) {
+        console.error('Erro ao inicializar mapa:', error);
     }
-  }
-
-  // Se não houver nenhum SOS ativo
-  if (cardAlerta) cardAlerta.style.display = 'none';
 }
 
-// Escuta alterações de outras abas em tempo real
-window.addEventListener('storage', (event) => {
-  if (event.key === 'neurosync_sos_status') {
-    checarStatusSOS();
-  }
-});
+// ============================================================
+// 7. RESOLVER SOS
+// ============================================================
+async function resolverSOS() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/localizacao', { 
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            localStorage.removeItem('neurosync_sos_status');
+            const cardAlerta = document.getElementById('card-alerta-sos');
+            if (cardAlerta) cardAlerta.style.display = 'none';
+            
+            if (map) {
+                map.remove();
+                map = null;
+                marker = null;
+            }
+            alert('✅ SOS marcado como resolvido com sucesso!');
+        } else {
+            alert('❌ Erro ao resolver SOS.');
+        }
+    } catch (error) {
+        console.error('Erro ao resolver SOS:', error);
+        alert('❌ Erro de conexão ao resolver SOS.');
+    }
+}
 
-// Botão: Marcar SOS como Resolvido
-window.marcarSosComoResolvido = async function() {
-  try {
-    // 1. Limpa o SOS no banco MongoDB
-    await fetch('/localizacao', { method: 'DELETE' });
+// ============================================================
+// 8. ALTERAR PERMISSÃO
+// ============================================================
+async function alterarPermissao(ativado) {
+    const idCuidador = localStorage.getItem('userId') || localStorage.getItem('usuarioId');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/cuidadores/permissao', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                cuidadorId: idCuidador,
+                compartilhar: ativado
+            })
+        });
 
-    // 2. Limpa o localStorage local
-    localStorage.removeItem('neurosync_sos_status');
+        if (response.ok) {
+            console.log(ativado ? '✅ Compartilhamento ativado!' : '🔒 Compartilhamento desativado.');
+        }
+    } catch (error) {
+        console.error('Erro ao alterar permissão:', error);
+    }
+}
 
-    // 3. Esconde a caixa do alerta na hora
-    const cardAlerta = document.getElementById('card-alerta-sos');
-    if (cardAlerta) cardAlerta.style.display = 'none';
-
-    alert('✅ SOS marcado como resolvido!');
-  } catch (err) {
-    console.error('Erro ao resolver SOS:', err);
-    alert('⚠️ Erro ao conectar com o servidor para resolver o SOS.');
-  }
+// ============================================================
+// 9. FECHAR MODAL
+// ============================================================
+window.fecharModal = function(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.remove();
 };

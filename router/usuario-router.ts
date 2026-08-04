@@ -7,23 +7,52 @@ import {
   deletarUsuario,
   loginUsuario,
   buscarPacientePorId,
-  vincularPaciente 
+  vincularPaciente,
+  getMeusPacientes,
+  vincularPacienteAoMedico,
+  getMeusPacientesMedico,
+  atualizarStatusPaciente
 } from '../controller/usuario-controller.js';
 import { atualizarGeolocalizacao } from '../controller/localizacao-controller.js';
+import { authMiddleware, authorize } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { createUsuarioSchema, loginSchema, updateUsuarioSchema } from '../validators/usuarioValidator.js';
 
 const router = Router();
 
-// 1. ROTAS ESPECÍFICAS PRIMEIRO (Antes do :id)
-router.post('/cadastro', criarUsuario);
-router.post('/login', loginUsuario);
-router.post('/vincular-paciente', vincularPaciente); 
+router.post('/cadastro', validate(createUsuarioSchema), criarUsuario);
+router.post('/login', validate(loginSchema), loginUsuario);
+router.use(authMiddleware);
+
+router.get('/meus-pacientes', authorize('Cuidador'), getMeusPacientes);
+
+router.post('/vincular-paciente', authorize('Cuidador', 'Terapeuta'), vincularPaciente);
+
 router.put('/localizacao', atualizarGeolocalizacao);
+
 router.get('/paciente/:id', buscarPacientePorId);
 
-// 2. ROTAS GENÉRICAS COM :id POR ÚLTIMO
-router.get('/', getUsuarios);
+router.get('/', authorize('Terapeuta', 'Medico'), getUsuarios);
 router.get('/:id', getUsuarioById);
-router.put('/:id', atualizarUsuario);
-router.delete('/:id', deletarUsuario);
+router.put('/:id', validate(updateUsuarioSchema), atualizarUsuario);
+router.delete('/:id', authorize('Terapeuta', 'Medico'), deletarUsuario);
+router.post(
+  '/vincular-paciente-medico',
+  authMiddleware,
+  authorize('Terapeuta', 'Medico'),
+  vincularPacienteAoMedico
+);
+router.get(
+  '/meus-pacientes-medico',
+  authMiddleware,
+  authorize('Terapeuta', 'Medico'),
+  getMeusPacientesMedico
+);
+router.put(
+  '/:id/status',
+  authMiddleware,
+  authorize('Terapeuta', 'Medico'),
+  atualizarStatusPaciente
+);
 
 export default router;
