@@ -23,8 +23,9 @@ import LocalizacaoRouter from './router/localizacao-router.js';
 import apiRouter from './router/api-router.js';
 import BotaoSosRouter from './router/botaoSos-router.js';
 import InsightRouter from './router/insight-router.js';
+import TarefaRouter from './router/tarefa-router.js';
+import MicroPassosRouter from './router/microPassos-router.js';
 
-// Middleware de erro
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Swagger
@@ -58,7 +59,8 @@ app.use('/localizacao', LocalizacaoRouter);
 app.use('/api', apiRouter);
 app.use('/sos', BotaoSosRouter);
 app.use('/insights', InsightRouter);
-
+app.use('/tarefas', TarefaRouter);
+app.use('/micro-passos', MicroPassosRouter);
 
 app.get('/health', (req, res) => {
     res.json({ 

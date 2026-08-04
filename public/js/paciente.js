@@ -1,32 +1,27 @@
-// js/paciente.js - VERSÃO COMPLETA CORRIGIDA
-
-// ============================================================
-// PACIENTE - DASHBOARD
+// js/paciente.js - VERSÃO COMPLETA COM TAREFAS + MICRO-PASSOS
 // ============================================================
 
+// ============================================================
+// 1. VALIDAÇÃO DE ACESSO
+// ============================================================
 function validarAcessoPaciente() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userRole') || '';
     const userId = localStorage.getItem('userId') || localStorage.getItem('usuarioId');
 
-    console.log('🔍 Verificando acesso paciente:', { token: !!token, role, userId });
-
     if (!token) {
-        console.warn('❌ Token não encontrado');
         alert('Faça login para acessar o sistema.');
         window.location.href = '/index.html';
         return false;
     }
 
     if (role.toLowerCase() !== 'paciente') {
-        console.warn('❌ Role inválida:', role);
         alert(`Acesso negado! Você é um(a) ${role}, não um paciente.`);
         window.location.href = '/index.html';
         return false;
     }
 
     if (!userId) {
-        console.warn('❌ userId não encontrado');
         alert('Erro: ID do usuário não encontrado. Faça login novamente.');
         window.location.href = '/index.html';
         return false;
@@ -38,17 +33,13 @@ function validarAcessoPaciente() {
         el.innerHTML = `<i class="fa-regular fa-circle-user"></i> Olá, ${nome}`;
     }
 
-    console.log('✅ Acesso validado para paciente:', nome);
     return true;
 }
 
 // ============================================================
-// FUNÇÃO DE LOGOUT DIRETA (SEM DEPENDER DO auth.js)
+// 2. LOGOUT
 // ============================================================
 function fazerLogout() {
-    console.log('🔴 Fazendo logout...');
-    
-    // Limpa todos os dados do localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
@@ -56,37 +47,30 @@ function fazerLogout() {
     localStorage.removeItem('usuarioId');
     localStorage.removeItem('paciente_id');
     localStorage.removeItem('neurosync_sos_status');
-    
-    // Redireciona para o login
     window.location.href = '/index.html';
 }
 
-// ✅ INICIALIZAÇÃO
+// ============================================================
+// 3. INICIALIZAÇÃO
+// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 Página do paciente carregada');
-    
     if (!validarAcessoPaciente()) return;
 
-    // ✅ BOTÃO LOGOUT - USANDO A FUNÇÃO LOCAL
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.addEventListener('click', function(e) {
+        btnLogout.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('🔴 Botão de sair clicado!');
             fazerLogout();
         });
-    } else {
-        console.warn('⚠️ Botão de logout não encontrado na página');
     }
 
-    // Carregar dados
     carregarCuidador();
-    carregarRotinas();
+    carregarTarefas();
     configurarBotaoSOS();
 });
 
 // ============================================================
-// 1. CARREGAR CUIDADOR RESPONSÁVEL
+// 4. CARREGAR CUIDADOR
 // ============================================================
 async function carregarCuidador() {
     const container = document.getElementById('info-cuidador');
@@ -98,11 +82,14 @@ async function carregarCuidador() {
     }
 
     try {
-        const response = await fetch(`/api/pacientes/perfil/${pacienteId}`);
-        
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/pacientes/perfil/${pacienteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
         if (response.ok) {
             const dados = await response.json();
-            
+
             if (dados.cuidador) {
                 container.innerHTML = `
                     <p><strong>👤 Nome:</strong> ${dados.cuidador.nome || 'Não informado'}</p>
@@ -114,31 +101,23 @@ async function carregarCuidador() {
             } else {
                 container.innerHTML = `
                     <p style="color: var(--warning);">
-                        <i class="fa-solid fa-triangle-exclamation"></i> 
-                        Você ainda não está vinculado a nenhum cuidador.
+                        <i class="fa-solid fa-triangle-exclamation"></i> Você ainda não está vinculado a nenhum cuidador.
                     </p>
                 `;
             }
-        } else if (response.status === 404) {
-            container.innerHTML = `
-                <p style="color: var(--warning);">
-                    <i class="fa-solid fa-triangle-exclamation"></i> 
-                    Você ainda não está vinculado a nenhum cuidador.
-                </p>
-            `;
         } else {
             container.innerHTML = `<p style="color: var(--text-secondary);">Erro ao carregar cuidador.</p>`;
         }
     } catch (error) {
         console.error('Erro ao buscar cuidador:', error);
-        container.innerHTML = `<p style="color: var(--danger);">Erro de conexão ao buscar cuidador.</p>`;
+        container.innerHTML = `<p style="color: var(--danger);">Erro de conexão.</p>`;
     }
 }
 
 // ============================================================
-// 2. CARREGAR ROTINAS DO PACIENTE
+// 5. CARREGAR TAREFAS + MICRO-PASSOS
 // ============================================================
-async function carregarRotinas() {
+async function carregarTarefas() {
     const container = document.getElementById('tasks-container');
     const pacienteId = localStorage.getItem('userId') || localStorage.getItem('paciente_id');
 
@@ -148,34 +127,42 @@ async function carregarRotinas() {
     }
 
     try {
-        const response = await fetch(`/api/pacientes/${pacienteId}/rotinas`);
-        
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/tarefas/paciente/${pacienteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
         if (response.ok) {
             const tarefas = await response.json();
-            
+
             if (!tarefas || tarefas.length === 0) {
                 container.innerHTML = `
-                    <p style="text-align: center; color: var(--text-secondary); padding: 20px;">
-                        <i class="fa-regular fa-face-smile" style="font-size: 24px; display: block; margin-bottom: 8px;"></i>
+                    <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                        <i class="fa-regular fa-face-smile" style="font-size: 32px; display: block; margin-bottom: 12px;"></i>
                         Nenhuma tarefa cadastrada para você ainda.
-                    </p>
+                        <br><small>Seu cuidador irá adicionar suas atividades em breve.</small>
+                    </div>
                 `;
                 return;
             }
 
-            container.innerHTML = tarefas.map((tarefa, index) => {
-                const titulo = tarefa.tituloTarefa || tarefa.descriçaoTarefa || 'Tarefa';
+            container.innerHTML = tarefas.map(tarefa => {
+                const titulo = tarefa.tituloTarefa || 'Tarefa';
+                const descricao = tarefa.descriçaoTarefa || '';
                 const imagem = tarefa.imagem_Url || '';
-                const id = tarefa.idTarefa || tarefa.id || `tarefa-${index}`;
+                const id = tarefa.idTarefa || tarefa.id;
+                const statusTravado = tarefa.statusTravado || false;
+                const microPassos = tarefa.microPassos || [];
 
                 return `
-                    <div class="task-item" data-tarefa-id="${id}" style="
-                        background: var(--background);
-                        border-radius: 8px;
+                    <div class="task-card" data-tarefa-id="${id}" style="
+                        background: var(--card-bg);
+                        border-radius: 12px;
                         padding: 16px;
-                        margin-bottom: 12px;
+                        margin-bottom: 16px;
                         border: 1px solid var(--border);
-                        transition: var(--transition);
+                        box-shadow: var(--shadow);
+                        ${statusTravado ? 'border-left: 4px solid var(--danger);' : ''}
                     ">
                         <div style="display: flex; gap: 16px; align-items: flex-start;">
                             ${imagem ? `
@@ -196,18 +183,69 @@ async function carregarRotinas() {
                                     align-items: center;
                                     justify-content: center;
                                     flex-shrink: 0;
-                                    color: white;
+                                    color: var(--primary-dark);
                                     font-size: 28px;
                                 ">
                                     <i class="fa-solid fa-clipboard-list"></i>
                                 </div>
                             `}
                             <div style="flex: 1;">
-                                <h4 style="margin: 0 0 4px 0; font-size: 16px;">${titulo}</h4>
-                                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
-                                    ${tarefa.descriçaoTarefa || ''}
-                                </p>
-                                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h4 style="margin: 0; font-size: 16px;">${titulo}</h4>
+                                    ${statusTravado ? `
+                                        <span style="
+                                            background: var(--danger);
+                                            color: white;
+                                            padding: 2px 10px;
+                                            border-radius: 12px;
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                        ">
+                                            <i class="fa-solid fa-hand"></i> Travado
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                ${descricao ? `<p style="margin: 4px 0 8px 0; font-size: 13px; color: var(--text-secondary);">${descricao}</p>` : ''}
+                                
+                                <!-- Micro-passos -->
+                                ${microPassos.length > 0 ? `
+                                    <div style="margin-top: 10px;">
+                                        <p style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
+                                            <i class="fa-solid fa-list-check"></i> Passos:
+                                        </p>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            ${microPassos.sort((a, b) => a.ordemPasso - b.ordemPasso).map(passo => `
+                                                <div style="
+                                                    display: flex;
+                                                    align-items: center;
+                                                    gap: 8px;
+                                                    font-size: 13px;
+                                                    padding: 4px 8px;
+                                                    border-radius: 6px;
+                                                    background: ${passo.concluido ? 'var(--primary-light)' : 'var(--background)'};
+                                                    color: ${passo.concluido ? 'var(--primary-dark)' : 'var(--text-primary)'};
+                                                ">
+                                                    <input type="checkbox" 
+                                                        ${passo.concluido ? 'checked' : ''} 
+                                                        onchange="toggleMicroPasso('${passo.idMicroPassos || passo.id}', this)"
+                                                        style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;">
+                                                    <span style="${passo.concluido ? 'text-decoration: line-through; opacity: 0.7;' : ''}">
+                                                        ${passo.descricaoPasso}
+                                                    </span>
+                                                    ${passo.imagemPassos ? `
+                                                        <img src="${passo.imagemPassos}" alt="passo" style="width: 24px; height: 24px; border-radius: 4px; object-fit: cover;">
+                                                    ` : ''}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                                        <i class="fa-regular fa-circle"></i> Nenhum passo definido
+                                    </p>
+                                `}
+
+                                <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
                                     <button class="btn-concluir" data-id="${id}" style="
                                         padding: 6px 16px;
                                         border: none;
@@ -218,7 +256,7 @@ async function carregarRotinas() {
                                         font-size: 13px;
                                         transition: var(--transition);
                                     ">
-                                        <i class="fa-solid fa-check"></i> Concluir
+                                        <i class="fa-solid fa-check"></i> Concluir Tudo
                                     </button>
                                     <button class="btn-travado" data-id="${id}" style="
                                         padding: 6px 16px;
@@ -239,10 +277,11 @@ async function carregarRotinas() {
                 `;
             }).join('');
 
+            // Event listeners
             document.querySelectorAll('.btn-concluir').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.dataset.id;
-                    marcarConcluido(id, btn);
+                    concluirTarefaCompleta(id);
                 });
             });
 
@@ -254,33 +293,82 @@ async function carregarRotinas() {
             });
 
         } else {
-            container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar rotinas.</p>`;
+            container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar tarefas.</p>`;
         }
     } catch (error) {
-        console.error('Erro ao carregar rotinas:', error);
-        container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro de conexão ao carregar rotinas.</p>`;
+        console.error('Erro ao carregar tarefas:', error);
+        container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro de conexão.</p>`;
     }
 }
 
 // ============================================================
-// 3. MARCAR TAREFA COMO CONCLUÍDA
+// 6. ALTERNAR MICRO-PASSO
 // ============================================================
-function marcarConcluido(id, btn) {
-    btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Concluído!';
-    btn.style.background = '#065F46';
-    btn.style.cursor = 'default';
-    btn.disabled = true;
-    mostrarToast('✅ Tarefa concluída com sucesso!', 'success');
+window.toggleMicroPasso = async function(microPassoId, checkbox) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/micro-passos/${microPassoId}/toggle-concluido`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const dados = await response.json();
+            mostrarToast(dados.mensagem || 'Passo atualizado!', 'success');
+            // Recarregar as tarefas
+            setTimeout(carregarTarefas, 500);
+        } else {
+            checkbox.checked = !checkbox.checked;
+            mostrarToast('Erro ao atualizar passo.', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao alternar micro-passo:', error);
+        checkbox.checked = !checkbox.checked;
+        mostrarToast('Erro de conexão.', 'error');
+    }
+};
+
+// ============================================================
+// 7. CONCLUIR TAREFA COMPLETA
+// ============================================================
+async function concluirTarefaCompleta(tarefaId) {
+    try {
+        // Buscar todos os micro-passos da tarefa
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/micro-passos/tarefa/${tarefaId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const passos = await response.json();
+
+            // Marcar todos como concluídos
+            for (const passo of passos) {
+                if (!passo.concluido) {
+                    await fetch(`/micro-passos/${passo.idMicroPassos || passo.id}/toggle-concluido`, {
+                        method: 'PATCH',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+            }
+
+            mostrarToast('✅ Todas as tarefas concluídas! Parabéns!', 'success');
+            setTimeout(carregarTarefas, 500);
+        }
+    } catch (error) {
+        console.error('Erro ao concluir tarefa:', error);
+        mostrarToast('Erro ao concluir tarefa.', 'error');
+    }
 }
 
 // ============================================================
-// 4. REGISTRAR TRAVAMENTO
+// 8. REGISTRAR TRAVAMENTO
 // ============================================================
 async function registrarTravamento(tarefaId) {
     const pacienteId = localStorage.getItem('userId') || localStorage.getItem('paciente_id');
 
     if (!pacienteId) {
-        alert('ID do paciente não encontrado.');
+        mostrarToast('ID do paciente não encontrado.', 'error');
         return;
     }
 
@@ -300,48 +388,48 @@ async function registrarTravamento(tarefaId) {
 
         if (response.ok) {
             mostrarToast('🔄 Travamento registrado! Vamos te ajudar.', 'warning');
-            abrirModalTravado(tarefaId);
+            abrirModalAjuda(tarefaId);
         } else {
             const erro = await response.json();
-            alert('❌ Erro ao registrar travamento: ' + (erro.error || 'Tente novamente.'));
+            mostrarToast('❌ Erro: ' + (erro.error || 'Tente novamente.'), 'error');
         }
     } catch (error) {
         console.error('Erro ao registrar travamento:', error);
-        alert('Erro de conexão ao registrar travamento.');
+        mostrarToast('Erro de conexão.', 'error');
     }
 }
 
 // ============================================================
-// 5. MODAL TÔ TRAVADO
+// 9. MODAL DE AJUDA (Tô Travado)
 // ============================================================
-function abrirModalTravado(tarefaId) {
-    const modalExistente = document.getElementById('modal-travado');
-    if (modalExistente) modalExistente.remove();
+function abrirModalAjuda(tarefaId) {
+    const existente = document.getElementById('modal-ajuda');
+    if (existente) existente.remove();
 
     const passos = [
-        '1. Respire fundo e conte até 10.',
-        '2. Peça ajuda para alguém próximo.',
-        '3. Tente novamente com calma.',
-        '4. Se ainda estiver difícil, chame seu cuidador.'
+        { icon: 'fa-solid fa-breath', text: 'Respire fundo e conte até 10.' },
+        { icon: 'fa-solid fa-hand', text: 'Peça ajuda para alguém próximo.' },
+        { icon: 'fa-solid fa-arrows-rotate', text: 'Tente novamente com calma.' },
+        { icon: 'fa-solid fa-phone', text: 'Se ainda estiver difícil, chame seu cuidador.' }
     ];
 
     let passoAtual = 0;
 
     const modal = document.createElement('div');
-    modal.id = 'modal-travado';
+    modal.id = 'modal-ajuda';
     modal.className = 'modal-overlay active';
     modal.innerHTML = `
-        <div class="modal-card">
-            <button class="modal-close" onclick="fecharModalTravado()">&times;</button>
+        <div class="modal-card" style="max-width: 500px;">
+            <button class="modal-close" onclick="fecharModalAjuda()">&times;</button>
             <div class="modal-header">
-                <h2><i class="fa-solid fa-hand-holding-heart"></i> Vamos te ajudar!</h2>
+                <h2><i class="fa-solid fa-hand-holding-heart" style="color: var(--primary);"></i> Vamos te ajudar!</h2>
                 <p>Siga os passos com calma</p>
             </div>
-            <div id="passos-container" style="margin: 20px 0;">
+            <div style="margin: 20px 0;">
                 <div style="
-                    background: var(--primary-light);
+                    background: var(--primary);
                     color: white;
-                    padding: 12px 16px;
+                    padding: 10px 16px;
                     border-radius: 8px;
                     margin-bottom: 16px;
                     text-align: center;
@@ -349,21 +437,22 @@ function abrirModalTravado(tarefaId) {
                     <span id="passo-numero" style="font-weight: 600;">Passo 1 de ${passos.length}</span>
                 </div>
                 <div id="passo-conteudo" style="
-                    font-size: 18px;
                     text-align: center;
-                    padding: 20px;
+                    padding: 30px 20px;
                     background: var(--background);
                     border-radius: 8px;
-                    min-height: 80px;
+                    min-height: 100px;
                     display: flex;
+                    flex-direction: column;
                     align-items: center;
                     justify-content: center;
                 ">
-                    ${passos[0]}
+                    <i class="${passos[0].icon}" style="font-size: 32px; color: var(--primary); margin-bottom: 12px;"></i>
+                    <p style="font-size: 18px; margin: 0;">${passos[0].text}</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="fecharModalTravado()" style="
+                <button onclick="fecharModalAjuda()" style="
                     padding: 10px 20px;
                     border: 1px solid var(--border);
                     background: transparent;
@@ -390,66 +479,60 @@ function abrirModalTravado(tarefaId) {
     document.getElementById('btn-proximo-passo')?.addEventListener('click', () => {
         passoAtual++;
         if (passoAtual < passos.length) {
+            const passo = passos[passoAtual];
             document.getElementById('passo-numero').textContent = `Passo ${passoAtual + 1} de ${passos.length}`;
-            document.getElementById('passo-conteudo').textContent = passos[passoAtual];
+            document.getElementById('passo-conteudo').innerHTML = `
+                <i class="${passo.icon}" style="font-size: 32px; color: var(--primary); margin-bottom: 12px;"></i>
+                <p style="font-size: 18px; margin: 0;">${passo.text}</p>
+            `;
         } else {
             document.getElementById('passo-conteudo').innerHTML = `
-                <div style="text-align: center;">
-                    <i class="fa-solid fa-circle-check" style="font-size: 48px; color: var(--success);"></i>
-                    <p style="margin-top: 12px; font-size: 18px; font-weight: 600; color: var(--success);">
-                        🎉 Parabéns! Você concluiu todas as etapas!
-                    </p>
-                </div>
+                <i class="fa-solid fa-circle-check" style="font-size: 48px; color: var(--success);"></i>
+                <p style="margin-top: 12px; font-size: 18px; font-weight: 600; color: var(--success);">
+                    🎉 Parabéns! Você concluiu todas as etapas!
+                </p>
             `;
             document.getElementById('btn-proximo-passo').style.display = 'none';
             document.getElementById('passo-numero').textContent = '✅ Concluído!';
-            salvarProgressoTravado(tarefaId);
+            salvarAjudaConcluida(tarefaId);
         }
     });
 }
 
-window.fecharModalTravado = function() {
-    const modal = document.getElementById('modal-travado');
+window.fecharModalAjuda = function() {
+    const modal = document.getElementById('modal-ajuda');
     if (modal) modal.remove();
 };
 
-async function salvarProgressoTravado(tarefaId) {
-    const pacienteId = localStorage.getItem('userId') || localStorage.getItem('paciente_id');
+async function salvarAjudaConcluida(tarefaId) {
     try {
         const token = localStorage.getItem('token');
-        await fetch('/botao-travado/progresso', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                pacienteId,
-                tarefaId,
-                concluido: true,
-                dataHora: new Date().toISOString()
-            })
+        await fetch(`/tarefas/${tarefaId}/toggle-travado`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        console.log('✅ Progresso do travado salvo!');
+        console.log('✅ Ajuda concluída para tarefa:', tarefaId);
+        setTimeout(carregarTarefas, 500);
     } catch (error) {
-        console.error('Erro ao salvar progresso:', error);
+        console.error('Erro ao salvar ajuda concluída:', error);
     }
 }
 
 // ============================================================
-// 6. BOTÃO SOS
+// 10. BOTÃO SOS
 // ============================================================
 function configurarBotaoSOS() {
     const btn = document.getElementById('btn-sos');
-    if (!btn) return;
-    btn.addEventListener('click', dispararSOS);
+    if (btn) {
+        btn.addEventListener('click', dispararSOS);
+    }
 }
 
 async function dispararSOS() {
     const pacienteId = localStorage.getItem('userId') || localStorage.getItem('paciente_id');
 
     if (!pacienteId) {
-        alert('⚠️ ID do paciente não encontrado. Faça login novamente.');
+        mostrarToast('⚠️ ID do paciente não encontrado.', 'error');
         return;
     }
 
@@ -460,18 +543,19 @@ async function dispararSOS() {
             async (position) => {
                 await enviarSOS(pacienteId, position.coords.latitude, position.coords.longitude);
             },
-            async (error) => {
-                console.warn('Erro no GPS, usando fallback:', error.message);
+            async () => {
                 await enviarSOS(pacienteId, -15.7801, -47.9292);
             }
         );
     } else {
-        alert('Geolocalização não suportada no navegador.');
+        mostrarToast('Geolocalização não suportada.', 'error');
     }
 }
-
 async function enviarSOS(pacienteId, latitude, longitude) {
     try {
+        const token = localStorage.getItem('token');
+        
+        // Salvar localmente para o cuidador
         const sosData = {
             ativo: true,
             lat: latitude,
@@ -481,7 +565,8 @@ async function enviarSOS(pacienteId, latitude, longitude) {
         };
         localStorage.setItem('neurosync_sos_status', JSON.stringify(sosData));
 
-        const token = localStorage.getItem('token');
+        console.log('📤 Enviando SOS para:', { pacienteId, latitude, longitude });
+        
         const response = await fetch('/localizacao', {
             method: 'PUT',
             headers: {
@@ -495,24 +580,58 @@ async function enviarSOS(pacienteId, latitude, longitude) {
             })
         });
 
+        console.log('📥 Resposta SOS:', response.status);
+        const data = await response.json().catch(() => ({}));
+
         if (response.ok) {
             mostrarToast('🚨 SOS enviado com sucesso! Cuidador notificado.', 'danger');
         } else {
-            const erro = await response.json();
-            mostrarToast('⚠️ Erro ao enviar SOS: ' + (erro.error || 'Tente novamente.'), 'error');
+            mostrarToast('⚠️ Erro ao enviar SOS: ' + (data.error || 'Tente novamente.'), 'error');
         }
     } catch (error) {
-        console.error('Erro ao enviar SOS:', error);
+        console.error('❌ Erro ao enviar SOS:', error);
         mostrarToast('❌ Erro de conexão ao enviar SOS.', 'error');
     }
 }
-
 // ============================================================
-// 7. TOAST (Notificações)
+// 11. TOAST (NOTIFICAÇÕES)
 // ============================================================
 function mostrarToast(mensagem, tipo = 'info') {
     const toast = document.getElementById('sos-toast');
-    if (!toast) return;
+    if (!toast) {
+        // Criar toast se não existir
+        const newToast = document.createElement('div');
+        newToast.id = 'sos-toast';
+        newToast.style.cssText = `
+            display: block;
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 60;
+            max-width: 350px;
+            font-size: 14px;
+        `;
+        document.body.appendChild(newToast);
+        const toastEl = document.getElementById('sos-toast');
+        toastEl.textContent = mensagem;
+        const cores = {
+            success: '#10B981',
+            warning: '#F59E0B',
+            danger: '#EF4444',
+            error: '#EF4444',
+            info: '#4F46E5'
+        };
+        toastEl.style.background = cores[tipo] || cores.info;
+        toastEl.style.color = 'white';
+
+        setTimeout(() => {
+            toastEl.style.display = 'none';
+        }, 5000);
+        return;
+    }
 
     const cores = {
         success: '#10B981',
@@ -524,6 +643,7 @@ function mostrarToast(mensagem, tipo = 'info') {
 
     toast.textContent = mensagem;
     toast.style.background = cores[tipo] || cores.info;
+    toast.style.color = 'white';
     toast.style.display = 'block';
 
     setTimeout(() => {
@@ -532,8 +652,6 @@ function mostrarToast(mensagem, tipo = 'info') {
 }
 
 // ============================================================
-// 8. RECARREGAR ROTINAS PERIODICAMENTE
+// 12. RECARREGAR PERIODICAMENTE
 // ============================================================
-setInterval(() => {
-    carregarRotinas();
-}, 30000);
+setInterval(carregarTarefas, 30000);

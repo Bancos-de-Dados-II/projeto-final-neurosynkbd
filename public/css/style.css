@@ -456,3 +456,171 @@ tbody tr:hover {
 .auth-form.active {
   display: flex;
 }
+.task-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.task-card.travado {
+    border-left: 4px solid var(--danger);
+}
+
+.task-card .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.task-card .task-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.task-card .task-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+
+.task-card .task-status.travado {
+    background: var(--danger);
+    color: white;
+}
+
+.task-card .task-status.concluido {
+    background: var(--success);
+    color: white;
+}
+
+/* Micro-passos */
+.micro-passos-container {
+    margin-top: 10px;
+}
+
+.micro-passo-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--background);
+    transition: var(--transition);
+}
+
+.micro-passo-item.concluido {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.micro-passo-item input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.micro-passo-item .passo-imagem {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+/* Botões de ação nas tarefas */
+.btn-tarefa {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-tarefa-concluir {
+    background: var(--success);
+    color: white;
+}
+
+.btn-tarefa-concluir:hover {
+    background: #059669;
+}
+
+.btn-tarefa-travado {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-tarefa-travado:hover {
+    background: #dc2626;
+}
+
+.btn-tarefa-editar {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.btn-tarefa-editar:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-tarefa-deletar {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-tarefa-deletar:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+
+/* Modal de ajuda */
+.modal-ajuda-step {
+    text-align: center;
+    padding: 30px 20px;
+    background: var(--background);
+    border-radius: 8px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-ajuda-step .step-icon {
+    font-size: 32px;
+    color: var(--primary);
+    margin-bottom: 12px;
+}
+
+.modal-ajuda-step .step-text {
+    font-size: 18px;
+    margin: 0;
+}
+
+.modal-ajuda-step .step-number {
+    background: var(--primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}

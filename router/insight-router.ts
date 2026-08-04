@@ -1,4 +1,3 @@
-// router/insight-router.ts
 import { Router } from 'express';
 import InsightController from '../controller/insight-controller.js';
 import { authMiddleware, authorize } from '../middleware/auth.js';
@@ -7,14 +6,13 @@ import { z } from 'zod';
 
 const router = Router();
 
-// Schemas de validação para Insights
 const createInsightSchema = z.object({
     body: z.object({
         dashboard: z.string().min(10, 'Dashboard deve ter pelo menos 10 caracteres'),
         periodo_semana: z.string().optional(),
         periodo_Mes: z.string().optional(),
-        terapeutaId: z.string().uuid('ID do terapeuta inválido'),
-        pacienteId: z.string().uuid('ID do paciente inválido')
+        terapeutaId: z.string().min(1, 'ID do terapeuta é obrigatório'),
+        pacienteId: z.string().min(1, 'ID do paciente é obrigatório')
     })
 });
 
